@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "79545204439",
+    "firebase_url": "https://security-routes.firebaseio.com",
+    "project_id": "security-routes",
+    "storage_bucket": "security-routes.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:79545204439:android:71bdcae1ab552bdd",
+        "android_client_info": {
+          "package_name": "com.securityroute"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "79545204439-t2ihqcjuafmaour8bgav1e690oknqq5u.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.securityroute",
+            "certificate_hash": "d249b4999a790f799932ef9af79d0c72cc4a7b49"
+          }
+        },
+        {
+          "client_id": "79545204439-r7m0rfg1ifltj7m52dbi5e1c0gtsb89l.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBHzSVJd4JUMefu2LPPaXVsfhCFUidFbdE"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "79545204439-r7m0rfg1ifltj7m52dbi5e1c0gtsb89l.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

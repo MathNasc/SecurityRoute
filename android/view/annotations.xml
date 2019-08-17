@@ -1,0 +1,5 @@
+<root>
+    <item name='android.view.KeyEvent int getAction()'>
+        <annotation name='java.lang.Deprecated' />
+    </item>
+</root>
