@@ -59,7 +59,13 @@
     fabMenu.classList.remove('open'); fabMain.classList.remove('open');
     Sheet.open();
   });
-  map.on('click', () => { fabMenu.classList.remove('open'); fabMain.classList.remove('open'); });
+  // Fecha FAB no clique do mapa, mas não interfere com o modo de seleção
+  map.on('click', () => {
+    if (!document.body.classList.contains('pin-mode')) {
+      fabMenu.classList.remove('open');
+      fabMain.classList.remove('open');
+    }
+  });
 
   /* 7. GPS */
   document.getElementById('gpsBtn')?.addEventListener('click', () => MapMod.locate());
