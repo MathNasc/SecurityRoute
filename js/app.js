@@ -1,99 +1,139 @@
 /* ════════════════════════════════════════════════════
-   APP — inicialização principal
+   APP — js/app.js
+   Main init. Wires all modules together.
    ════════════════════════════════════════════════════ */
 (async () => {
-  /* 1. Map */
-  const map = MapMod.init();
-  Markers.init(map);
-  Heatmap.init(map);
-  SafetyScore.init(map);
+  const hideLoading = () => document.getElementById('loading')?.classList.add('hidden');
+  const fallback = setTimeout(hideLoading, 5000);
 
-  /* 2. Load data */
   try {
-    const occs = await API.getOccurrences();
-    Markers.addMany(occs);
-    Stats.update();
-    if (occs.length) Toast.success(`${occs.length} ocorrências carregadas`, '', 2500);
-  } catch {
-    Toast.error('Erro ao carregar ocorrências', 'Modo demo ativado.', 4000);
+    /* 1. Map + markers */
+    const map = MapMod.init();
+    Markers.init(map);
+    Heatmap.init(map);
+    SafetyScore.init(map);
+
+    /* 2. Route planner — init BEFORE wiring map clicks */
+    RoutePlanner.init();
+
+    /* 3. Override map click: route planner gets first pick,
+          then occurrence pin mode, then close FAB */
+    map.on('click', (e) => {
+      const { lat, lng } = e.latlng;
+
+      // Route planner consumes click when in pick mode
+      if (RoutePlanner.onMapClick(lat, lng)) return;
+
+      // Occurrence pin mode (handled inside MapMod via _selecting flag)
+      // Nothing to do — MapMod already hooks 'click' internally.
+
+      // Otherwise close FAB
+      if (!document.body.classList.contains('pin-mode')) {
+        closeFab();
+      }
+    });
+
+    /* 4. Load incidents */
+    try {
+      const occs = await API.getOccurrences();
+      Markers.addMany(occs);
+      Stats.update();
+      if (occs.length) Toast.success(`${occs.length} ocorrências carregadas`, '', 2500);
+    } catch {
+      Toast.error('Erro ao carregar ocorrências', 'Modo demo ativado.', 4000);
+    }
+
+    /* 5. Filters + search */
+    Filters.init();
+    Filters.initFloatBar();
+    initSearch('searchInput', 'searchAC');
+    initSearch('searchFloatInput', 'searchFloatAC');
+
+    document.getElementById('searchClear')?.addEventListener('click', () => {
+      document.getElementById('searchInput').value = '';
+      document.getElementById('searchClear').classList.remove('visible');
+      document.getElementById('searchAC').classList.remove('open');
+    });
+
+  } catch (e) {
+    console.error('[SR] Init error:', e);
+    Toast.error('Erro ao inicializar', 'Recarregue a página.');
   } finally {
-    setTimeout(() => document.getElementById('loading')?.classList.add('hidden'), 700);
+    clearTimeout(fallback);
+    setTimeout(hideLoading, 500);
   }
 
-  /* 3. Filters */
-  Filters.init();
-  Filters.initFloatBar();
-
-  /* 4. Searches */
-  initSearch('searchInput',     'searchAC');
-  initSearch('searchFloatInput','searchFloatAC');
-
-  document.getElementById('searchClear')?.addEventListener('click', () => {
-    document.getElementById('searchInput').value = '';
-    document.getElementById('searchClear').classList.remove('visible');
-    document.getElementById('searchAC').classList.remove('open');
+  /* ── Sidebar toggle (mobile) ── */
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sbOverlay');
+  document.getElementById('menuToggle')?.addEventListener('click', () => {
+    sidebar.classList.add('open'); overlay.classList.add('open');
+  });
+  document.getElementById('sbClose')?.addEventListener('click', () => {
+    sidebar.classList.remove('open'); overlay.classList.remove('open');
+  });
+  overlay.addEventListener('click', () => {
+    sidebar.classList.remove('open'); overlay.classList.remove('open');
   });
 
-  /* 5. Sidebar toggle (mobile) */
-  const sidebar = document.getElementById('sidebar');
-  const overlay = document.getElementById('sidebarOverlay');
-  document.getElementById('menuToggle')?.addEventListener('click',  () => { sidebar.classList.add('open'); overlay.classList.add('open'); });
-  document.getElementById('sidebarClose')?.addEventListener('click', () => { sidebar.classList.remove('open'); overlay.classList.remove('open'); });
-  overlay.addEventListener('click', () => { sidebar.classList.remove('open'); overlay.classList.remove('open'); });
+  /* ── Search clear ── */
+  document.getElementById('sbSearchClr')?.addEventListener('click', () => {
+    document.getElementById('sbSearch').value = '';
+    document.getElementById('sbSearchClr').classList.remove('vis');
+    document.getElementById('sbAC').classList.remove('open');
+  });
+  document.getElementById('sbSearch')?.addEventListener('input', e => {
+    document.getElementById('sbSearchClr')?.classList.toggle('vis', e.target.value.length > 0);
+  });
 
-  /* 6. FAB speed-dial */
+  /* ── FAB speed-dial ── */
   const fabMain = document.getElementById('fabMain');
   const fabMenu = document.getElementById('fabMenu');
+
+  function closeFab() {
+    fabMenu.classList.remove('open');
+    fabMain.classList.remove('open');
+  }
+
   fabMain.addEventListener('click', () => {
     const open = fabMenu.classList.toggle('open');
     fabMain.classList.toggle('open', open);
   });
-  document.querySelectorAll('.fab-type[data-type]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      fabMenu.classList.remove('open'); fabMain.classList.remove('open');
-      Sheet.open(btn.dataset.type);
-    });
+  document.querySelectorAll('.fab-row[data-type]').forEach(btn => {
+    btn.addEventListener('click', () => { closeFab(); Sheet.open(btn.dataset.type); });
   });
-  // Open generic sheet (group selection)
-  document.getElementById('fabNewBtn')?.addEventListener('click', () => {
-    fabMenu.classList.remove('open'); fabMain.classList.remove('open');
-    Sheet.open();
-  });
-  // Fecha FAB no clique do mapa, mas não interfere com o modo de seleção
-  map.on('click', () => {
-    if (!document.body.classList.contains('pin-mode')) {
-      fabMenu.classList.remove('open');
-      fabMain.classList.remove('open');
-    }
-  });
+  document.getElementById('fabAll')?.addEventListener('click', () => { closeFab(); Sheet.open(); });
 
-  /* 7. GPS */
+  /* ── Sheet events ── */
+  document.getElementById('shBd')?.addEventListener('click', () => Sheet.close());
+  document.getElementById('shX')?.addEventListener('click', () => Sheet.close());
+  document.getElementById('shCancel')?.addEventListener('click', () => Sheet.close());
+  document.getElementById('shConfirm')?.addEventListener('click', () => Sheet.confirm());
+  document.getElementById('pinBtn')?.addEventListener('click', () => Sheet._enterPin());
+
+  /* ── Map controls ── */
   document.getElementById('gpsBtn')?.addEventListener('click', () => MapMod.locate());
-
-  /* 8. Heatmap toggle */
-  document.getElementById('heatmapBtn')?.addEventListener('click', () => {
-    const btn  = document.getElementById('heatmapBtn');
+  document.getElementById('heatBtn')?.addEventListener('click', () => {
+    const btn = document.getElementById('heatBtn');
     const active = Heatmap.toggle(Markers.getAll());
     btn.classList.toggle('active', active);
-    btn.title = active ? 'Desativar Heatmap' : 'Ativar Heatmap';
     Toast.info(active ? 'Heatmap ativado' : 'Heatmap desativado', '', 1500);
   });
-
-  /* 9. Clear markers */
-  document.getElementById('clearBtn')?.addEventListener('click', () => {
+  document.getElementById('clrBtn')?.addEventListener('click', () => {
     Markers.clear(); Stats.update();
     Toast.info('Marcadores removidos', '', 2000);
   });
 
-  /* 10. Emergency buttons */
-  document.querySelectorAll('[data-emergency]').forEach(btn => {
+  /* ── Emergency ── */
+  document.querySelectorAll('[data-emergency], #emSb, #emMap').forEach(btn => {
     btn.addEventListener('click', () => window.location.href = 'tel:190');
   });
 
-  /* 11. ESC */
+  /* ── ESC ── */
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
-      MapMod.stopSelect(); fabMenu.classList.remove('open'); fabMain.classList.remove('open');
+      Sheet.close();
+      closeFab();
     }
   });
 })();
