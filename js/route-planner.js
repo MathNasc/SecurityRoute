@@ -225,7 +225,7 @@ const RoutePlanner = (() => {
     try {
       const routes = await OSRMClient.getRoutes(_oLat, _oLng, _dLat, _dLng, _profile);
 
-      const incidents = MK.getAll();
+      const incidents = (typeof Markers !== 'undefined' ? Markers : MK).getAll();
       const now = new Date();
       const scored = routes.map(rt => ({ ...rt, ...RiskEngine.score(rt.coords, incidents, now) }));
 
@@ -434,3 +434,4 @@ const RoutePlanner = (() => {
 
   return { init, onMapClick };
 })();
+ 
