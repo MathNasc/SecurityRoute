@@ -346,6 +346,45 @@ body.pin-mode,body.pin-mode #map{cursor:crosshair!important}
 .g-card-lbl{font-family:var(--fd);font-size:18px;letter-spacing:.05em;color:var(--tx)}
 .g-card-sub{font-family:var(--fm);font-size:10px;color:var(--tx3);margin-top:2px}
 .g-card-arr{width:16px;height:16px;color:var(--tx3);flex-shrink:0;margin-left:auto}
+
+/* sheet.js full class names — must match exactly what sheet.js generates */
+.group-cards{display:flex;flex-direction:column;gap:9px}
+.group-card{display:flex;align-items:center;gap:12px;padding:14px;border-radius:16px;background:var(--s2);border:1px solid var(--bd);transition:all var(--ts);cursor:pointer;text-align:left;width:100%}
+.group-card:hover{background:var(--s3);border-color:var(--bd2);transform:translateX(3px)}
+.group-card-icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.group-card-icon svg{width:22px;height:22px;flex-shrink:0}
+.group-card-body{flex:1;min-width:0}
+.group-card-label{font-family:var(--fd);font-size:18px;letter-spacing:.05em;color:var(--tx)}
+.group-card-sub{font-family:var(--fm);font-size:10px;color:var(--tx3);margin-top:2px}
+.group-card-arrow{width:16px;height:16px;color:var(--tx3);flex-shrink:0}
+.group-card-arrow svg{width:16px;height:16px}
+.back-btn{display:flex;align-items:center;gap:6px;padding:6px 10px;margin-bottom:14px;border-radius:8px;background:var(--s2);border:1px solid var(--bd);font-family:var(--fm);font-size:11px;letter-spacing:.08em;color:var(--tx2);transition:all var(--t);cursor:pointer}
+.back-btn:hover{color:var(--tx);background:var(--s3)}
+.back-btn svg{width:13px;height:13px;flex-shrink:0}
+.types-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.type-tile{display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px 8px;border-radius:16px;background:var(--s2);border:2px solid var(--bd);cursor:pointer;transition:all var(--ts);text-align:center}
+.type-tile:hover{border-color:var(--t-color,var(--bd3));transform:translateY(-2px)}
+.type-tile-icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--t-color,var(--tx));background:rgba(255,255,255,.06)}
+.type-tile-icon svg{width:22px;height:22px;flex-shrink:0}
+.type-tile-label{font-family:var(--fm);font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--tx2);text-align:center;line-height:1.3}
+
+/* sheet.js form step generated classes */
+.form-type-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:var(--rf);font-family:var(--fm);font-size:11px;letter-spacing:.05em;margin-right:6px}
+.form-type-badge svg{width:12px;height:12px;flex-shrink:0}
+.form-group-badge{font-family:var(--fm);font-size:10px;color:var(--tx3);letter-spacing:.08em}
+.coords-row{display:flex;align-items:center;gap:7px;padding:8px 11px;background:var(--s2);border:1px solid var(--bd);border-radius:8px;font-family:var(--fm);font-size:11px;color:var(--tx2);margin-bottom:14px}
+.coords-row svg{width:13px;height:13px;color:var(--tx3);flex-shrink:0}
+
+/* markers.js popup classes */
+.popup-card{min-width:220px;max-width:280px}
+.popup-head{padding:14px 42px 10px 14px;border-bottom:1px solid var(--bd)}
+.popup-badge{display:inline-flex;align-items:center;padding:2px 9px;border-radius:var(--rf);font-family:var(--fm);font-size:9px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:7px}
+.popup-title{font-size:14px;font-weight:600;color:var(--tx)}
+.popup-body{padding:10px 14px 14px}
+.popup-row{display:flex;align-items:flex-start;gap:7px;font-size:12px;color:var(--tx2);line-height:1.5;margin-bottom:5px}
+.popup-row:last-child{margin-bottom:0}
+.popup-row-icon{width:13px;height:13px;flex-shrink:0;margin-top:2px;color:var(--tx3)}
+.popup-time{font-family:var(--fm);font-size:10.5px;color:var(--tx3);margin-top:8px;padding-top:8px;border-top:1px solid var(--bd)}
 .bk-btn{display:flex;align-items:center;gap:6px;padding:6px 10px;margin-bottom:14px;border-radius:8px;background:var(--s2);border:1px solid var(--bd);font-family:var(--fm);font-size:11px;letter-spacing:.08em;color:var(--tx2);transition:all var(--t);cursor:pointer}
 .bk-btn:hover{color:var(--tx);background:var(--s3)}
 .bk-btn svg{width:13px;height:13px}
@@ -413,8 +452,8 @@ body.pin-mode,body.pin-mode #map{cursor:crosshair!important}
   .toast-wrap{bottom:88px;right:12px}
 }
 @media(max-width:480px){
-  .ty-grid{grid-template-columns:repeat(2,1fr)}
-  .ty-tile{padding:12px 8px}
+  .ty-grid,.types-grid{grid-template-columns:repeat(2,1fr)}
+  .ty-tile,.type-tile{padding:12px 8px}
   .fab-main{width:48px;height:48px}
   .fab-ico{width:38px;height:38px}
 }
