@@ -97,12 +97,9 @@
   });
   document.getElementById('fabAll')?.addEventListener('click', () => { closeFab(); Sheet.open(); });
 
-  /* ── Sheet events ── */
-  document.getElementById('shBd')?.addEventListener('click', () => Sheet.close());
-  document.getElementById('shX')?.addEventListener('click', () => Sheet.close());
-  document.getElementById('shCancel')?.addEventListener('click', () => Sheet.close());
-  document.getElementById('shConfirm')?.addEventListener('click', () => Sheet.confirm());
-  document.getElementById('pinBtn')?.addEventListener('click', () => Sheet._enterPin());
+  /* ── Sheet events — wired internally by sheet.js via DOMContentLoaded ── */
+  // Sheet.open() is called by FAB buttons above.
+  // Close/confirm/pin events are registered inside sheet.js itself.
 
   /* ── Map controls ── */
   document.getElementById('gpsBtn')?.addEventListener('click', () => MapMod.locate());
