@@ -385,6 +385,17 @@ body.pin-mode,body.pin-mode #map{cursor:crosshair!important}
 .popup-row:last-child{margin-bottom:0}
 .popup-row-icon{width:13px;height:13px;flex-shrink:0;margin-top:2px;color:var(--tx3)}
 .popup-time{font-family:var(--fm);font-size:10.5px;color:var(--tx3);margin-top:8px;padding-top:8px;border-top:1px solid var(--bd)}
+
+/* heatmap.js SafetyScore._render() injects these classes into #safetyScore and #safetyMapBadge */
+.safety-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;transition:background .4s}
+.sf-badge .safety-dot{width:8px;height:8px}
+.safety-info{flex:1;min-width:0}
+.safety-label{font-family:var(--fd);font-size:16px;letter-spacing:.06em;line-height:1;transition:color .4s}
+.sf-badge .safety-label{font-size:14px}
+.safety-sub{font-family:var(--fm);font-size:10px;color:var(--tx3);margin-top:3px}
+.sf-badge .safety-sub{font-size:9.5px}
+.safety-score{font-family:var(--fd);font-size:30px;line-height:1;margin-left:auto;transition:color .4s}
+.sf-badge .safety-score{font-size:22px}
 .bk-btn{display:flex;align-items:center;gap:6px;padding:6px 10px;margin-bottom:14px;border-radius:8px;background:var(--s2);border:1px solid var(--bd);font-family:var(--fm);font-size:11px;letter-spacing:.08em;color:var(--tx2);transition:all var(--t);cursor:pointer}
 .bk-btn:hover{color:var(--tx);background:var(--s3)}
 .bk-btn svg{width:13px;height:13px}
@@ -510,15 +521,15 @@ body.pin-mode,body.pin-mode #map{cursor:crosshair!important}
         <div class="sb-stats">
           <span class="sec-lbl">Ocorrências</span>
           <div class="st-grid">
-            <div class="st-box sec"><div class="st-n" id="stSec">0</div><div class="st-l">SEGURANÇA</div></div>
-            <div class="st-box inf"><div class="st-n" id="stInf">0</div><div class="st-l">INFRAESTR.</div></div>
-            <div class="st-box mob"><div class="st-n" id="stMob">0</div><div class="st-l">MOBILIDADE</div></div>
+            <div class="st-box sec"><div class="st-n" id="stat-security">0</div><div class="st-l">SEGURANÇA</div></div>
+            <div class="st-box inf"><div class="st-n" id="stat-infra">0</div><div class="st-l">INFRAESTR.</div></div>
+            <div class="st-box mob"><div class="st-n" id="stat-mobility">0</div><div class="st-l">MOBILIDADE</div></div>
           </div>
-          <div class="st-tot"><span class="st-tot-l">TOTAL</span><span class="st-tot-n" id="stTot">0</span></div>
+          <div class="st-tot"><span class="st-tot-l">TOTAL</span><span class="st-tot-n" id="stat-total">0</span></div>
         </div>
         <div class="sb-safety">
           <span class="sec-lbl">Índice de segurança</span>
-          <div class="sf-box" id="sfSidebar">
+          <div class="sf-box" id="safetyScore">
             <div class="sf-dot" style="background:var(--tx3)"></div>
             <div><div class="sf-lbl" style="color:var(--tx2)">Calculando…</div><div class="sf-sub">aguardando mapa</div></div>
             <div class="sf-num" style="color:var(--tx3)">—</div>
@@ -621,7 +632,7 @@ body.pin-mode,body.pin-mode #map{cursor:crosshair!important}
       </div>
       <div class="ac-float" id="mAC"></div>
     </div>
-    <div class="sf-badge" id="sfBadge">
+    <div class="sf-badge" id="safetyMapBadge">
       <div class="sf-dot" style="background:var(--tx3)"></div>
       <div><div class="sf-lbl" style="color:var(--tx2)">Calculando</div><div class="sf-sub">área visível</div></div>
       <div class="sf-num" style="color:var(--tx3)">—</div>
