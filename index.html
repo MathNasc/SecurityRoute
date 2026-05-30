@@ -218,6 +218,17 @@ body{display:flex;flex-direction:column}
 .rp-hint.vis{display:flex}
 .rp-hint-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
 
+/* Route address autocomplete */
+.rp-ac{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--s2);border:1px solid var(--bd2);border-radius:8px;overflow:hidden;max-height:180px;overflow-y:auto;display:none;z-index:600;box-shadow:var(--shx)}
+.rp-ac.open{display:block}
+.rp-ac-item{display:flex;align-items:center;gap:9px;padding:9px 12px;cursor:pointer;border-bottom:1px solid var(--bd);transition:background var(--t)}
+.rp-ac-item:last-child{border-bottom:none}
+.rp-ac-item:hover{background:var(--s3)}
+.rp-ac-ico{width:24px;height:24px;border-radius:4px;background:var(--s3);border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;color:var(--tx3);flex-shrink:0}
+.rp-ac-ico svg{width:11px;height:11px}
+.rp-ac-p{font-size:12px;color:var(--tx);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rp-ac-s{font-size:10px;color:var(--tx3);font-family:var(--fm);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
 /* ── Map ── */
 .map-wrap{flex:1;position:relative;overflow:hidden}
 #map{position:absolute;inset:0;z-index:1}
@@ -496,11 +507,14 @@ body.pin-mode,body.pin-mode #map{cursor:crosshair!important}
         <div class="rp-waypoints">
           <div class="rp-input-row">
             <span class="rp-dot rp-dot-origin"></span>
-            <div class="rp-input-wrap">
-              <input class="rp-inp" id="rpOriginInp" placeholder="Origem — clique no mapa" readonly/>
-              <button class="rp-pick" id="rpPickOrigin" title="Selecionar no mapa">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-              </button>
+            <div style="flex:1;position:relative">
+              <div class="rp-input-wrap">
+                <input class="rp-inp" id="rpOriginInp" placeholder="Origem — endereço ou clique no mapa" autocomplete="off" spellcheck="false"/>
+                <button class="rp-pick" id="rpPickOrigin" title="Selecionar no mapa">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                </button>
+              </div>
+              <div class="rp-ac" id="rpOriginAC"></div>
             </div>
           </div>
           <div class="rp-connector">
@@ -511,11 +525,14 @@ body.pin-mode,body.pin-mode #map{cursor:crosshair!important}
           </div>
           <div class="rp-input-row">
             <span class="rp-dot rp-dot-dest"></span>
-            <div class="rp-input-wrap">
-              <input class="rp-inp" id="rpDestInp" placeholder="Destino — clique no mapa" readonly/>
-              <button class="rp-pick" id="rpPickDest" title="Selecionar no mapa">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-              </button>
+            <div style="flex:1;position:relative">
+              <div class="rp-input-wrap">
+                <input class="rp-inp" id="rpDestInp" placeholder="Destino — endereço ou clique no mapa" autocomplete="off" spellcheck="false"/>
+                <button class="rp-pick" id="rpPickDest" title="Selecionar no mapa">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                </button>
+              </div>
+              <div class="rp-ac" id="rpDestAC"></div>
             </div>
           </div>
         </div>
