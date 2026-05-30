@@ -16,8 +16,15 @@
     /* 2. Route planner — init BEFORE wiring map clicks */
     RoutePlanner.init();
 
-    /* 3. Override map click: route planner gets first pick,
-          then occurrence pin mode, then close FAB */
+    /* closeFab declared here so map click handler below can reference it */
+    const fabMain = document.getElementById('fabMain');
+    const fabMenu = document.getElementById('fabMenu');
+    function closeFab() {
+      fabMenu.classList.remove('open');
+      fabMain.classList.remove('open');
+    }
+
+    /* 3. Override map click */
     map.on('click', (e) => {
       const { lat, lng } = e.latlng;
 
@@ -46,14 +53,8 @@
     /* 5. Filters + search */
     Filters.init();
     Filters.initFloatBar();
-    initSearch('searchInput', 'searchAC');
-    initSearch('searchFloatInput', 'searchFloatAC');
-
-    document.getElementById('searchClear')?.addEventListener('click', () => {
-      document.getElementById('searchInput').value = '';
-      document.getElementById('searchClear').classList.remove('visible');
-      document.getElementById('searchAC').classList.remove('open');
-    });
+    initSearch('sbSearch',  'sbAC');
+    initSearch('mSearch',   'mAC');
 
   } catch (e) {
     console.error('[SR] Init error:', e);
@@ -87,14 +88,6 @@
   });
 
   /* ── FAB speed-dial ── */
-  const fabMain = document.getElementById('fabMain');
-  const fabMenu = document.getElementById('fabMenu');
-
-  function closeFab() {
-    fabMenu.classList.remove('open');
-    fabMain.classList.remove('open');
-  }
-
   fabMain.addEventListener('click', () => {
     const open = fabMenu.classList.toggle('open');
     fabMain.classList.toggle('open', open);
