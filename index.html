@@ -337,7 +337,7 @@ body.pin-mode,body.pin-mode #map{cursor:crosshair!important}
 .sh-x{width:30px;height:30px;border-radius:6px;background:var(--s2);border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;color:var(--tx3);font-size:20px;transition:all var(--t)}
 .sh-x:hover{color:var(--tx);background:var(--s3)}
 .sh-step{padding:18px;display:none}
-.sh-step.on{display:block}
+.sh-step.active{display:block}
 .g-cards{display:flex;flex-direction:column;gap:9px}
 .g-card{display:flex;align-items:center;gap:12px;padding:14px;border-radius:16px;background:var(--s2);border:1px solid var(--bd);transition:all var(--ts);cursor:pointer;text-align:left;width:100%}
 .g-card:hover{background:var(--s3);border-color:var(--bd2);transform:translateX(3px)}
@@ -611,36 +611,36 @@ body.pin-mode,body.pin-mode #map{cursor:crosshair!important}
   </main>
 </div>
 
-<!-- SHEET -->
-<div class="sh-bd" id="shBd"></div>
+<!-- SHEET — IDs match sheet.js exactly -->
+<div class="sh-bd" id="sheetBackdrop"></div>
 <div class="sheet" id="sheet">
   <div class="sh-handle"></div>
   <div class="sh-hdr">
-    <div class="sh-title" id="shTitle">Nova Ocorrência</div>
-    <button class="sh-x" id="shX">×</button>
+    <div class="sh-title" id="sheetTitle">Nova Ocorrência</div>
+    <button class="sh-x" id="sheetClose">×</button>
   </div>
-  <div class="sh-step" id="stpGroups"><div class="g-cards" id="gCardList"></div></div>
-  <div class="sh-step" id="stpTypes"></div>
-  <div class="sh-step" id="stpPin">
+  <div class="sh-step" id="stepGroups"><div class="g-cards" id="groupCardsList"></div></div>
+  <div class="sh-step" id="stepTypes"></div>
+  <div class="sh-step" id="stepPin">
     <div class="pin-c">
       <div class="pin-circle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
-      <div class="pin-lbl" id="pinLbl">Ocorrência</div>
+      <div class="pin-lbl" id="pinTypeLabel">Ocorrência</div>
       <p class="pin-desc">Toque em <strong>Marcar no Mapa</strong>, depois clique no local exato.</p>
-      <button class="btn btn-pri" id="pinBtn" style="max-width:200px;width:100%">
+      <button class="btn btn-pri" id="pinReadyBtn" style="max-width:200px;width:100%">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Marcar no Mapa
       </button>
     </div>
   </div>
-  <div class="sh-step" id="stpForm">
-    <div class="frm-badges" id="frmBadge"></div>
-    <div class="frm-coords"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg><span id="frmCoords">—</span></div>
-    <div class="frm-grp"><label class="frm-lbl">Descrição (opcional)</label><textarea class="frm-ta" id="frmDesc" placeholder="Descreva o que aconteceu…" rows="3"></textarea></div>
-    <div class="frm-grp"><label class="frm-lbl">Data e hora</label><input class="frm-inp" type="datetime-local" id="frmDate"/></div>
+  <div class="sh-step" id="stepForm">
+    <div class="frm-badges" id="formBadge"></div>
+    <div class="frm-coords"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg><span id="formCoords">—</span></div>
+    <div class="frm-grp"><label class="frm-lbl">Descrição (opcional)</label><textarea class="frm-ta" id="formDesc" placeholder="Descreva o que aconteceu…" rows="3"></textarea></div>
+    <div class="frm-grp"><label class="frm-lbl">Data e hora</label><input class="frm-inp" type="datetime-local" id="formDate"/></div>
   </div>
-  <div class="sh-foot" id="shFoot" style="display:none">
+  <div class="sh-foot" id="sheetFooter" style="display:none">
     <div class="btn-row">
-      <button class="btn btn-sec" id="shCancel">Cancelar</button>
-      <button class="btn btn-pri" id="shConfirm">Registrar Ocorrência</button>
+      <button class="btn btn-sec" id="sheetCancel">Cancelar</button>
+      <button class="btn btn-pri" id="sheetConfirm">Registrar Ocorrência</button>
     </div>
   </div>
 </div>
