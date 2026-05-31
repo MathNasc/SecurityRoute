@@ -386,7 +386,58 @@ body.pin-mode,body.pin-mode #map{cursor:crosshair!important}
 .popup-row-icon{width:13px;height:13px;flex-shrink:0;margin-top:2px;color:var(--tx3)}
 .popup-time{font-family:var(--fm);font-size:10.5px;color:var(--tx3);margin-top:8px;padding-top:8px;border-top:1px solid var(--bd)}
 
-/* heatmap.js SafetyScore._render() injects these classes into #safetyScore and #safetyMapBadge */
+/* ── CSS variable aliases (markers.js / other modules use these names) ── */
+:root {
+  --text-3:   var(--tx3);
+  --font-mono: var(--fm);
+  --font-d:   var(--fd);
+  --font-b:   var(--fb);
+  --r-xs: 4px; --r-sm: 8px; --r-lg: 16px; --r-xl: 24px; --r-f: 999px;
+  --sh-sm: 0 1px 4px rgba(0,0,0,.6);
+  --sh-lg: 0 8px 40px rgba(0,0,0,.7);
+  --sh-xl: 0 20px 80px rgba(0,0,0,.85);
+}
+
+/* ── map.js class aliases ── */
+.map-hint.visible{display:block}          /* map.js uses .visible, CSS had .vis */
+.ctrl-btn.loading svg{animation:spin .8s linear infinite} /* GPS button spinner */
+
+/* ── search.js clear button ── */
+.sw-clr.visible{display:flex}             /* search.js uses .visible, CSS had .vis */
+
+/* ── search.js autocomplete item classes ── */
+.autocomplete-item{display:flex;align-items:center;gap:9px;padding:9px 12px;cursor:pointer;border-bottom:1px solid var(--bd);transition:background var(--t)}
+.autocomplete-item:last-child{border-bottom:none}
+.autocomplete-item:hover{background:var(--s3)}
+.ac-icon{width:26px;height:26px;border-radius:4px;background:var(--s3);border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;color:var(--tx3);flex-shrink:0}
+.ac-icon svg{width:12px;height:12px}
+.ac-text{flex:1;min-width:0}
+.ac-primary{font-size:12.5px;color:var(--tx);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ac-secondary{font-size:10.5px;color:var(--tx3);font-family:var(--fm);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ── filters.js generated classes ── */
+/* Group tabs */
+.group-tab{display:flex;align-items:center;gap:9px;padding:8px 11px;border-radius:8px;border:1px solid transparent;color:var(--tx2);font-size:13px;font-weight:500;transition:all var(--t);text-align:left;width:100%}
+.group-tab:hover{background:var(--s2);color:var(--tx)}
+.group-tab.active{background:var(--s3);border-color:var(--bd2);color:var(--tx)}
+.group-tab-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.group-tab-count{margin-left:auto;font-family:var(--fm);font-size:10.5px;color:var(--tx3);background:var(--s3);padding:1px 6px;border-radius:999px;border:1px solid var(--bd);min-width:22px;text-align:center}
+.group-tab.active .group-tab-count{background:var(--s4);color:var(--tx2)}
+/* Type chips */
+.type-chip{display:flex;align-items:center;gap:5px;padding:4px 9px;border-radius:999px;background:var(--s2);border:1px solid var(--bd);font-size:11px;color:var(--tx3);transition:all var(--t);cursor:pointer}
+.type-chip:hover{border-color:var(--bd2);color:var(--tx2)}
+.type-chip.active{background:var(--s3);border-color:var(--bd3);color:var(--tx)}
+.type-chip svg{width:10px;height:10px;flex-shrink:0}
+.chip-count{font-family:var(--fm);font-size:10px;color:var(--tx3);background:var(--s3);border-radius:999px;padding:0 5px;min-width:16px;text-align:center}
+/* Time pills */
+.time-pill{flex:1;padding:7px 6px;border-radius:8px;background:var(--s2);border:1px solid var(--bd);font-size:12px;color:var(--tx3);transition:all var(--t);text-align:center;cursor:pointer}
+.time-pill:hover{background:var(--s3);color:var(--tx2)}
+.time-pill.active{background:var(--s3);border-color:var(--bd3);color:var(--tx)}
+/* Float filter bar pills */
+.float-pill{display:flex;align-items:center;gap:5px;padding:6px 12px;border-radius:999px;font-family:var(--fm);font-size:10px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--tx3);background:transparent;border:none;cursor:pointer;transition:all var(--t);white-space:nowrap}
+.float-pill:hover{background:var(--s4);color:var(--tx2)}
+.float-pill.active{background:var(--s4);color:var(--tx)}
+.float-pill-dot{width:6px;height:6px;border-radius:50%}
 .safety-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;transition:background .4s}
 .sf-badge .safety-dot{width:8px;height:8px}
 .safety-info{flex:1;min-width:0}
@@ -505,18 +556,18 @@ body.pin-mode,body.pin-mode #map{cursor:crosshair!important}
           <div class="sw">
             <svg class="sw-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             <input class="sw-inp" id="sbSearch" type="text" placeholder="Endereço, bairro…" autocomplete="off" spellcheck="false"/>
-            <button class="sw-clr" id="sbSearchClr">×</button>
+            <button class="sw-clr" id="searchClear">×</button>
           </div>
           <div class="ac-box" id="sbAC"></div>
         </div>
         <div class="sb-filters">
           <span class="sec-lbl">Categoria</span>
-          <div class="g-tabs" id="gTabs"></div>
-          <div class="t-chips" id="tChips"></div>
+          <div class="g-tabs" id="groupTabs"></div>
+          <div class="t-chips" id="typeChips"></div>
         </div>
         <div class="sb-time">
           <span class="sec-lbl">Período</span>
-          <div class="tm-pills" id="tmPills"></div>
+          <div class="tm-pills" id="timePills"></div>
         </div>
         <div class="sb-stats">
           <span class="sec-lbl">Ocorrências</span>
@@ -647,7 +698,7 @@ body.pin-mode,body.pin-mode #map{cursor:crosshair!important}
       <div class="rp-hint-dot" id="rpHintDot"></div>
       <span id="rpHintTxt"></span>
     </div>
-    <div class="fb-bar" id="fbBar"></div>
+    <div class="fb-bar" id="floatFilterBar"></div>
     <div class="fab-wrap">
       <div class="fab-menu" id="fabMenu">
         <button class="fab-row" data-type="rua_estreita"><span class="fab-lbl">Mobilidade</span><span class="fab-ico mob"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></span></button>
