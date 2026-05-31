@@ -10,7 +10,7 @@ const RoutePlanner = (() => {
   // ── State ──────────────────────────────────────────
   let _oLat = null, _oLng = null, _oLabel = '';
   let _dLat = null, _dLng = null, _dLabel = '';
-  let _profile  = 'foot';
+  let _profile  = 'driving';
   let _pickMode = null;       // 'origin' | 'dest' | null
   let _routeLayers  = [];
   let _originMarker = null;
@@ -221,6 +221,17 @@ const RoutePlanner = (() => {
       <div class="rp-spinner"></div>Buscando rotas e calculando risco…
     </div>`;
     _clearRoutes();
+
+    // Profile warning for non-driving on public OSRM
+    const isPublicOSRM = !(typeof CFG !== 'undefined' && CFG.osrm &&
+      CFG.osrm !== 'https://router.project-osrm.org');
+    if (isPublicOSRM && _profile !== 'driving') {
+      Toast.warn(
+        'Perfil limitado',
+        'O servidor público OSRM só garante "Carro". Use uma instância própria para outros perfis.',
+        5000
+      );
+    }
 
     try {
       const routes = await OSRMClient.getRoutes(_oLat, _oLng, _dLat, _dLng, _profile);
@@ -434,4 +445,3 @@ const RoutePlanner = (() => {
 
   return { init, onMapClick };
 })();
- 
