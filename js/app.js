@@ -78,13 +78,13 @@
   });
 
   /* ── Search clear ── */
-  document.getElementById('sbSearchClr')?.addEventListener('click', () => {
+  document.getElementById('searchClear')?.addEventListener('click', () => {
     document.getElementById('sbSearch').value = '';
-    document.getElementById('sbSearchClr').classList.remove('vis');
+    document.getElementById('searchClear').classList.remove('visible');
     document.getElementById('sbAC').classList.remove('open');
   });
   document.getElementById('sbSearch')?.addEventListener('input', e => {
-    document.getElementById('sbSearchClr')?.classList.toggle('vis', e.target.value.length > 0);
+    document.getElementById('searchClear')?.classList.toggle('visible', e.target.value.length > 0);
   });
 
   /* ── FAB speed-dial ── */
