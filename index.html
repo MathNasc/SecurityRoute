@@ -415,7 +415,8 @@ body.pin-mode,body.pin-mode #map{cursor:crosshair!important}
 .ac-primary{font-size:12.5px;color:var(--tx);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ac-secondary{font-size:10.5px;color:var(--tx3);font-family:var(--fm);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* Highlight matching text in search results */
-.ac-primary mark,.ac-secondary mark,.rp-ac-p mark,.rp-ac-s mark{background:rgba(255,107,43,.22);color:inherit;border-radius:2px;padding:0 1px}
+.ac-primary mark,.ac-secondary mark,.rp-ac-p mark,.rp-ac-s mark,mark.sh{
+  background:rgba(255,107,43,.22);color:inherit;border-radius:2px;padding:0 1px;font-style:normal}
 
 /* ── filters.js generated classes ── */
 /* Group tabs */
@@ -557,7 +558,7 @@ body.pin-mode,body.pin-mode #map{cursor:crosshair!important}
           <span class="sec-lbl">Buscar local</span>
           <div class="sw">
             <svg class="sw-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input class="sw-inp" id="sbSearch" type="text" placeholder="Endereço, bairro…" autocomplete="off" spellcheck="false"/>
+            <input class="sw-inp" id="sbSearch" type="text" placeholder="Ex: Av. Paulista, 1578, São Paulo" autocomplete="off" spellcheck="false"/>
             <button class="sw-clr" id="searchClear">×</button>
           </div>
           <div class="ac-box" id="sbAC"></div>
@@ -612,7 +613,7 @@ body.pin-mode,body.pin-mode #map{cursor:crosshair!important}
             <span class="rp-dot rp-dot-origin"></span>
             <div style="flex:1;position:relative">
               <div class="rp-input-wrap">
-                <input class="rp-inp" id="rpOriginInp" placeholder="Origem — endereço ou clique no mapa" autocomplete="off" spellcheck="false"/>
+                <input class="rp-inp" id="rpOriginInp" placeholder="Ex: Rua X, 123, São Paulo — ou clique no mapa" autocomplete="off" spellcheck="false"/>
                 <button class="rp-pick" id="rpPickOrigin" title="Selecionar no mapa">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
                 </button>
@@ -630,7 +631,7 @@ body.pin-mode,body.pin-mode #map{cursor:crosshair!important}
             <span class="rp-dot rp-dot-dest"></span>
             <div style="flex:1;position:relative">
               <div class="rp-input-wrap">
-                <input class="rp-inp" id="rpDestInp" placeholder="Destino — endereço ou clique no mapa" autocomplete="off" spellcheck="false"/>
+                <input class="rp-inp" id="rpDestInp" placeholder="Ex: Av. Paulista, 900 — ou clique no mapa" autocomplete="off" spellcheck="false"/>
                 <button class="rp-pick" id="rpPickDest" title="Selecionar no mapa">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
                 </button>
