@@ -79,16 +79,15 @@ const RoutePlanner = (() => {
     inp.addEventListener('input', () => {
       clearTimeout(timer);
       const v = inp.value.trim();
-      if (v.length < 3) { ac.classList.remove('open'); return; }
+      if (v.length < (/\d/.test(v) ? 4 : 3)) { ac.classList.remove('open'); return; }
 
       timer = setTimeout(async () => {
-        // Support both api.js variants (search vs searchAddress)
-        const results = await (API.search || API.searchAddress).call(API, v);
+        const results = await (API.searchAddress || API.search).call(API, v);
         if (!results.length) { ac.classList.remove('open'); return; }
 
         ac.innerHTML = results.map(r => `
           <div class="rp-ac-item" data-lat="${r.lat}" data-lng="${r.lng}"
-               data-primary="${_esc(r.primary)}" data-secondary="${_esc(r.secondary)}">
+               data-label="${_esc(r.primary)}${r.secondary ? ', ' + _esc(r.secondary.split(',')[0]) : ''}">
             <div class="rp-ac-ico">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
@@ -96,8 +95,8 @@ const RoutePlanner = (() => {
               </svg>
             </div>
             <div style="min-width:0">
-              <div class="rp-ac-p">${_esc(r.primary)}</div>
-              <div class="rp-ac-s">${_esc(r.secondary)}</div>
+              <div class="rp-ac-p">${_rpHighlight(r.primary, v)}</div>
+              ${r.secondary ? `<div class="rp-ac-s">${_esc(r.secondary)}</div>` : ''}
             </div>
           </div>`).join('');
 
@@ -107,15 +106,14 @@ const RoutePlanner = (() => {
           item.addEventListener('click', () => {
             const lat   = parseFloat(item.dataset.lat);
             const lng   = parseFloat(item.dataset.lng);
-            const label = item.dataset.primary +
-              (item.dataset.secondary ? ', ' + item.dataset.secondary : '');
-            inp.value = item.dataset.primary;
+            const label = item.dataset.label;
+            inp.value = item.querySelector('.rp-ac-p').textContent;
             ac.classList.remove('open');
             onSelect(lat, lng, label);
-            MapMod.flyTo(lat, lng, 15);
+            MapMod.flyTo(lat, lng, 17);
           });
         });
-      }, 380);
+      }, 420);
     });
 
     inp.addEventListener('keydown', e => {
@@ -127,6 +125,20 @@ const RoutePlanner = (() => {
         ac.classList.remove('open');
       }
     });
+  }
+
+  function _rpHighlight(text, query) {
+    if (!query || !text) return _esc(text);
+    const words = query.trim().split(/\s+/).filter(w => w.length > 1);
+    let out = _esc(text);
+    words.forEach(word => {
+      const esc = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      out = out.replace(
+        new RegExp(`(${esc})`, 'gi'),
+        '<mark style="background:rgba(255,107,43,.25);color:inherit;border-radius:2px;padding:0 1px">$1</mark>'
+      );
+    });
+    return out;
   }
 
   function _esc(s) {
