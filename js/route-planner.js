@@ -355,11 +355,43 @@ const RoutePlanner = (() => {
                 ${hs.count} ocorrência${hs.count > 1 ? 's' : ''} — risco local ${hs.score.toFixed(1)}pt
               </div>`).join('')}
           </div>` : ''}
+
+        <div class="rp-export-row">
+          <a class="rp-export-btn" href="${_googleMapsUrl(rt)}" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            Google Maps
+          </a>
+          <a class="rp-export-btn" href="${_wazeUrl(rt)}" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+            Waze
+          </a>
+          <a class="rp-export-btn" href="${_appleMapsUrl(rt)}" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><path d="M12 6v6l4 2"/></svg>
+            Apple Maps
+          </a>
+        </div>
       `;
 
       card.addEventListener('click', () => _selectRoute(i));
       list.appendChild(card);
     });
+  }
+
+  // ── Export URL builders ────────────────────────────
+  function _googleMapsUrl(route) {
+    const o = `${_oLat},${_oLng}`;
+    const d = `${_dLat},${_dLng}`;
+    const mode = { foot: 'walking', driving: 'driving', cycling: 'bicycling' }[_profile] || 'driving';
+    return `https://www.google.com/maps/dir/?api=1&origin=${o}&destination=${d}&travelmode=${mode}`;
+  }
+
+  function _wazeUrl(route) {
+    return `https://waze.com/ul?ll=${_dLat},${_dLng}&navigate=yes&from=ll.${_oLat},${_oLng}`;
+  }
+
+  function _appleMapsUrl(route) {
+    const mode = _profile === 'foot' ? 'w' : _profile === 'cycling' ? 'b' : 'd';
+    return `maps://maps.apple.com/?saddr=${_oLat},${_oLng}&daddr=${_dLat},${_dLng}&dirflg=${mode}`;
   }
 
   // ── Public: handle map click ───────────────────────

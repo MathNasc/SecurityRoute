@@ -41,14 +41,28 @@
     });
 
     /* 4. Load incidents */
+    let allOccs = [];
     try {
-      const occs = await API.getOccurrences();
-      Markers.addMany(occs);
+      allOccs = await API.getOccurrences();
+      Markers.addMany(allOccs);
       Stats.update();
-      if (occs.length) Toast.success(`${occs.length} ocorrências carregadas`, '', 2500);
+      Analytics.render(allOccs);
+      if (allOccs.length) Toast.success(`${allOccs.length} ocorrências carregadas`, '', 2500);
     } catch {
       Toast.error('Erro ao carregar ocorrências', 'Modo demo ativado.', 4000);
     }
+
+    /* 5. Realtime polling */
+    Realtime.start(allOccs);
+
+    /* 6. Refresh button */
+    document.getElementById('realtimeRefreshBtn')?.addEventListener('click', async () => {
+      const btn = document.getElementById('realtimeRefreshBtn');
+      btn?.classList.add('spinning');
+      await Realtime.refresh();
+      Analytics.render(Markers.getAll());
+      setTimeout(() => btn?.classList.remove('spinning'), 600);
+    });
 
     /* 5. Filters + search */
     Filters.init();

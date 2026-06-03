@@ -460,7 +460,36 @@ body.pin-mode,body.pin-mode #map{cursor:crosshair!important}
 .sf-badge .safety-sub{font-size:9.5px}
 .safety-score{font-family:var(--fd);font-size:30px;line-height:1;margin-left:auto;transition:color .4s}
 .sf-badge .safety-score{font-size:22px}
-.bk-btn{display:flex;align-items:center;gap:6px;padding:6px 10px;margin-bottom:14px;border-radius:8px;background:var(--s2);border:1px solid var(--bd);font-family:var(--fm);font-size:11px;letter-spacing:.08em;color:var(--tx2);transition:all var(--t);cursor:pointer}
+
+/* ── Analytics panel ── */
+.sb-analytics{padding:14px 20px;border-bottom:1px solid var(--bd)}
+.an-section-lbl{font-family:var(--fm);font-size:9.5px;letter-spacing:.18em;color:var(--tx3);text-transform:uppercase;display:flex;align-items:center;margin:10px 0 6px}
+.an-block{display:flex;flex-direction:column;gap:6px;margin-bottom:4px}
+.an-row{display:flex;align-items:center;gap:8px;min-width:0}
+.an-row-lbl{font-family:var(--fm);font-size:10px;color:var(--tx2);flex-shrink:0;width:90px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.an-bar-bg{flex:1;height:5px;background:var(--bd);border-radius:3px;overflow:hidden}
+.an-bar-fill{height:100%;border-radius:3px;transition:width .6s cubic-bezier(.4,0,.2,1)}
+.an-row-val{font-family:var(--fm);font-size:10px;color:var(--tx3);flex-shrink:0;min-width:20px;text-align:right}
+.an-empty{font-size:12px;color:var(--tx3);text-align:center;padding:12px 0}
+.an-hour-chart{display:flex;align-items:flex-end;gap:2px;height:52px;padding-bottom:18px;position:relative;margin-top:4px}
+.an-hour-col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;position:relative}
+.an-hour-bar{width:100%;border-radius:2px 2px 0 0;min-height:2px;transition:height .4s ease}
+.an-hour-lbl{font-family:var(--fm);font-size:7.5px;color:var(--tx3);position:absolute;bottom:-14px;white-space:nowrap}
+
+/* ── Realtime indicator ── */
+.sb-realtime{padding:10px 20px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between}
+.realtime-badge{display:flex;align-items:center;gap:6px;font-family:var(--fm);font-size:10px;color:var(--tx3);letter-spacing:.06em}
+.realtime-dot{width:7px;height:7px;border-radius:50%;background:var(--tx3);flex-shrink:0;transition:all .4s}
+.realtime-dot.live{background:var(--green);box-shadow:0 0 5px rgba(16,185,129,.7);animation:blink 2s ease infinite}
+.realtime-refresh{display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:6px;background:var(--s2);border:1px solid var(--bd);font-family:var(--fm);font-size:10px;color:var(--tx3);transition:all var(--t);cursor:pointer}
+.realtime-refresh:hover{color:var(--tx);border-color:var(--bd2)}
+.realtime-refresh svg{width:11px;height:11px}
+.realtime-refresh.spinning svg{animation:spin .7s linear infinite}
+
+/* ── Export route buttons ── */
+.rp-export-row{display:flex;gap:5px;margin-top:10px;padding-top:10px;border-top:1px solid var(--bd)}
+.rp-export-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:4px;padding:6px 4px;border-radius:6px;background:var(--bg);border:1px solid var(--bd);font-family:var(--fm);font-size:9px;letter-spacing:.04em;color:var(--tx3);text-decoration:none;transition:all var(--t);white-space:nowrap}
+.rp-export-btn:hover{border-color:var(--bd2);color:var(--tx);background:var(--s3)}
 .bk-btn:hover{color:var(--tx);background:var(--s3)}
 .bk-btn svg{width:13px;height:13px}
 .ty-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
@@ -597,6 +626,29 @@ body.pin-mode,body.pin-mode #map{cursor:crosshair!important}
             <div class="sf-dot" style="background:var(--tx3)"></div>
             <div><div class="sf-lbl" style="color:var(--tx2)">Calculando…</div><div class="sf-sub">aguardando mapa</div></div>
             <div class="sf-num" style="color:var(--tx3)">—</div>
+          </div>
+        </div>
+
+        <!-- Realtime indicator -->
+        <div class="sb-realtime">
+          <div class="realtime-badge">
+            <div class="realtime-dot" id="realtimeDot"></div>
+            <span id="realtimeLabel">Iniciando…</span>
+          </div>
+          <button class="realtime-refresh" id="realtimeRefreshBtn" title="Atualizar agora">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="23 4 23 10 17 10"/>
+              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+            </svg>
+            Atualizar
+          </button>
+        </div>
+
+        <!-- Analytics -->
+        <div class="sb-analytics">
+          <span class="sec-lbl" style="padding:0 0 8px">Análise de ocorrências</span>
+          <div id="analyticsWrap">
+            <div class="an-empty">Carregando dados…</div>
           </div>
         </div>
         <div class="sb-how">
@@ -775,6 +827,8 @@ body.pin-mode,body.pin-mode #map{cursor:crosshair!important}
 <script src="js/search.js"></script>
 <script src="js/filters.js"></script>
 <script src="js/stats.js"></script>
+<script src="js/analytics.js"></script>
+<script src="js/realtime.js"></script>
 <script src="js/sheet.js"></script>
 <script src="js/route-planner.js"></script>
 <script src="js/app.js"></script>

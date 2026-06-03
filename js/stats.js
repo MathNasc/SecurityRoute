@@ -22,6 +22,11 @@ const Stats = {
     if (typeof SafetyScore !== 'undefined') {
       SafetyScore.recalc(Markers.getVisible ? Markers.getVisible() : Markers.getAll());
     }
+
+    // Re-render analytics with visible data
+    if (typeof Analytics !== 'undefined') {
+      Analytics.render(Markers.getVisible ? Markers.getVisible() : Markers.getAll());
+    }
   },
 };
 
