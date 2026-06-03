@@ -13,6 +13,7 @@ const CFG = {
   tile:    'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
   tileAttr:'© <a href="https://carto.com/">CARTO</a> | © <a href="https://openstreetmap.org/copyright">OSM</a>',
   nominatim:'https://nominatim.openstreetmap.org',
+  osrm: 'https://router.project-osrm.org',
   country: 'br',
 };
 
