@@ -6,11 +6,11 @@ const Markers = (() => {
   let _all = [];
   let _activeGroup = 'all';
   let _activeTypes = new Set(['all']);
+  let _activeTime  = 'all';   // 'all' | 'day' | 'night'
 
   /* ── Custom pin icon ── */
   function _icon(type) {
     const t = TYPES[type] || TYPES.assalto;
-    const g = GROUPS[t.group] || GROUPS.security;
     return L.divIcon({
       className: '',
       iconSize: [34, 40], iconAnchor: [17, 40], popupAnchor: [0, -42],
@@ -35,7 +35,7 @@ const Markers = (() => {
     const g  = GROUPS[t.group]  || GROUPS.security;
     const dt = occ.createdAt ? _timeAgo(new Date(occ.createdAt)) : '';
     const hour = occ.createdAt ? new Date(occ.createdAt).getHours() : -1;
-    const period = hour < 0 ? '' : hour >= 6 && hour < 18 ? '☀️ Diurno' : '🌙 Noturno';
+    const period = hour < 0 ? '' : _isDaytime(hour) ? '☀️ Diurno' : '🌙 Noturno';
     return `
     <div class="popup-card">
       <div class="popup-head" style="border-left:3px solid ${t.color}">
@@ -44,10 +44,10 @@ const Markers = (() => {
             <span style="width:5px;height:5px;border-radius:50%;background:${t.color};display:inline-block;margin-right:4px"></span>
             ${t.label.toUpperCase()}
           </span>
-          ${period ? `<span style="font-size:10px;color:var(--text-3);font-family:var(--font-mono)">${period}</span>` : ''}
+          ${period ? `<span style="font-size:10px;color:var(--tx3);font-family:var(--fm)">${period}</span>` : ''}
         </div>
         <div class="popup-title">${t.label}</div>
-        <div style="font-size:11px;color:var(--text-3);font-family:var(--font-mono);margin-top:3px">
+        <div style="font-size:11px;color:var(--tx3);font-family:var(--fm);margin-top:3px">
           ${g.short.toUpperCase()}
         </div>
       </div>
@@ -99,6 +99,29 @@ const Markers = (() => {
     });
   }
 
+  /* ── Time helpers ── */
+  function _isDaytime(hour) {
+    return hour >= 6 && hour < 20;
+  }
+
+  function _timeMatch(occ) {
+    if (_activeTime === 'all') return true;
+    if (!occ.createdAt) return true; // no date → always show
+    const hour = new Date(occ.createdAt).getHours();
+    if (_activeTime === 'day')   return _isDaytime(hour);
+    if (_activeTime === 'night') return !_isDaytime(hour);
+    return true;
+  }
+
+  /* ── Visibility check (group + type + time) ── */
+  function _visible(entry) {
+    const typeOk = _activeTypes.has('all') ||
+                   _activeTypes.has(entry.type) ||
+                   _activeTypes.has(entry.group);
+    const timeOk = _timeMatch(entry.occ);
+    return typeOk && timeOk;
+  }
+
   /* ── Public ── */
   function init(map) {
     _map = map;
@@ -124,21 +147,24 @@ const Markers = (() => {
 
   function addMany(occs) { occs.forEach(o => add(o)); }
 
-  /* Check if marker should be visible with current filter */
-  function _visible(entry) {
-    if (_activeTypes.has('all')) return true;
-    return _activeTypes.has(entry.type) || _activeTypes.has(entry.group);
+  function _applyFilter() {
+    _cluster.clearLayers();
+    _all.forEach(e => { if (_visible(e)) _cluster.addLayer(e.lm); });
   }
 
-  /* Filter by group or specific types */
+  /* Filter by group or specific type */
   function setFilter(groupOrType) {
     if (groupOrType === 'all') {
       _activeTypes = new Set(['all']);
-    } else if (GROUPS[groupOrType]) {
-      _activeTypes = new Set([groupOrType]);
     } else {
       _activeTypes = new Set([groupOrType]);
     }
+    _applyFilter();
+  }
+
+  /* Filter by time period */
+  function setTimeFilter(mode) {
+    _activeTime = mode; // 'all' | 'day' | 'night'
     _applyFilter();
   }
 
@@ -153,26 +179,26 @@ const Markers = (() => {
     _applyFilter();
   }
 
-  function _applyFilter() {
-    _cluster.clearLayers();
-    _all.forEach(e => { if (_visible(e)) _cluster.addLayer(e.lm); });
-  }
-
   function clear() { _cluster.clearLayers(); _all = []; }
 
   function getAll() { return _all.map(e => e.occ); }
 
+  function getVisible() {
+    return _all.filter(e => _visible(e)).map(e => e.occ);
+  }
+
   function counts() {
     const c = { total: 0 };
     Object.keys(GROUPS).forEach(g => c[g] = 0);
-    Object.keys(TYPES).forEach(t => c[t] = 0);
+    Object.keys(TYPES).forEach(t  => c[t] = 0);
     _all.forEach(e => {
+      if (!_visible(e)) return; // count only visible markers
       c.total++;
-      if (c[e.type] !== undefined) c[e.type]++;
+      if (c[e.type]  !== undefined) c[e.type]++;
       if (c[e.group] !== undefined) c[e.group]++;
     });
     return c;
   }
 
-  return { init, add, addMany, setFilter, toggleType, clear, getAll, counts };
+  return { init, add, addMany, setFilter, setTimeFilter, toggleType, clear, getAll, getVisible, counts };
 })();

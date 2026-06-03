@@ -61,7 +61,11 @@
     Toast.error('Erro ao inicializar', 'Recarregue a página.');
   } finally {
     clearTimeout(fallback);
-    setTimeout(hideLoading, 500);
+    setTimeout(() => {
+      hideLoading();
+      // Signal that the app is fully ready (used by PWA shortcuts)
+      window.dispatchEvent(new Event('sr:ready'));
+    }, 500);
   }
 
   /* ── Sidebar toggle (mobile) ── */

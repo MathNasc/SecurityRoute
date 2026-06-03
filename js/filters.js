@@ -16,11 +16,10 @@ const Filters = (() => {
     if (!el) return;
     const tabs = [
       { id:'all', label:'Todas', color:'var(--accent)' },
-      ...Object.values(GROUPS).map(g => ({id:g.id, label:g.short, color:g.color})),
+      ...Object.values(GROUPS).map(g => ({ id:g.id, label:g.short, color:g.color })),
     ];
     el.innerHTML = tabs.map(t => `
-      <button class="group-tab${t.id==='all'?' active':''}" data-group="${t.id}"
-        style="${t.id==='all'?'':''}">
+      <button class="group-tab${t.id==='all'?' active':''}" data-group="${t.id}">
         <span class="group-tab-dot" style="background:${t.color}"></span>
         ${t.label}
         <span class="group-tab-count" data-count="${t.id}">0</span>
@@ -34,6 +33,7 @@ const Filters = (() => {
         Markers.setFilter(_activeGroup);
         _buildTypeChips(_activeGroup);
         _syncFloatBar();
+        Stats.update();
       });
     });
   }
@@ -45,7 +45,7 @@ const Filters = (() => {
     const types = Object.entries(TYPES).filter(([, t]) => t.group === groupId);
     el.innerHTML = types.map(([key, t]) => `
       <button class="type-chip" data-type="${key}" style="--chip-color:${t.color}">
-        <span style="width:12px;height:12px;display:inline-flex;flex-shrink:0">${t.icon}</span>
+        <span style="width:10px;height:10px;display:inline-flex;flex-shrink:0;color:${t.color}">${t.icon}</span>
         ${t.label}
         <span class="chip-count" data-count="${key}">0</span>
       </button>`).join('');
@@ -53,27 +53,43 @@ const Filters = (() => {
       btn.addEventListener('click', () => {
         btn.classList.toggle('active');
         Markers.toggleType(btn.dataset.type);
+        Stats.update();
       });
     });
-    Stats.update(); // refresh counts in new chips
+    Stats.update();
   }
 
   function _buildTimePills() {
     const el = document.getElementById('timePills');
     if (!el) return;
-    [['all','Todos','☀️🌙'],['day','Diurno','☀️'],['night','Noturno','🌙']].forEach(([id,label,icon])=>{
-      const btn = document.createElement('button');
-      btn.className = 'time-pill' + (id==='all'?' active':'');
-      btn.dataset.time = id;
-      btn.innerHTML = `<span>${icon}</span> ${label}`;
+
+    const options = [
+      { id:'all',   label:'Todos',   icon:'☀️🌙', title:'Mostrar todas as ocorrências' },
+      { id:'day',   label:'Diurno',  icon:'☀️',   title:'Apenas ocorrências entre 6h e 19h' },
+      { id:'night', label:'Noturno', icon:'🌙',   title:'Apenas ocorrências entre 20h e 5h' },
+    ];
+
+    el.innerHTML = options.map((o, i) => `
+      <button class="time-pill${i === 0 ? ' active' : ''}"
+              data-time="${o.id}"
+              title="${o.title}">
+        <span>${o.icon}</span> ${o.label}
+      </button>`).join('');
+
+    el.querySelectorAll('.time-pill').forEach(btn => {
       btn.addEventListener('click', () => {
         el.querySelectorAll('.time-pill').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        _activeTime = id;
-        // TODO: filter by time when backend provides createdAt with hours
-        Toast.info(`Filtro: ${label}`,'',1500);
+        _activeTime = btn.dataset.time;
+
+        // ── Wire the actual filter ──
+        Markers.setTimeFilter(_activeTime);
+        Stats.update();
+
+        // Friendly feedback
+        const labels = { all:'Todos os períodos', day:'Período diurno (6h–19h)', night:'Período noturno (20h–5h)' };
+        Toast.info(labels[_activeTime] || _activeTime, '', 1800);
       });
-      el.appendChild(btn);
     });
   }
 
@@ -87,25 +103,28 @@ const Filters = (() => {
     const bar = document.getElementById('floatFilterBar');
     if (!bar) return;
     const items = [
-      {id:'all',   label:'Todas',    color:'var(--accent)'},
-      ...Object.values(GROUPS).map(g=>({id:g.id, label:g.short, color:g.color})),
+      { id:'all', label:'Todas', color:'var(--accent)' },
+      ...Object.values(GROUPS).map(g => ({ id:g.id, label:g.short, color:g.color })),
     ];
-    bar.innerHTML = items.map(item=>`
+    bar.innerHTML = items.map(item => `
       <button class="float-pill${item.id==='all'?' active':''}" data-group="${item.id}">
         <span class="float-pill-dot" style="background:${item.color}"></span>${item.label}
       </button>`).join('');
+
     bar.querySelectorAll('.float-pill').forEach(btn => {
       btn.addEventListener('click', () => {
-        document.querySelectorAll('.float-pill,.group-tab').forEach(b=>{
-          b.classList.toggle('active', b.dataset.group===btn.dataset.group || b.dataset.group===btn.dataset.group);
+        // Sync both float bar and sidebar tabs
+        document.querySelectorAll('.float-pill, .group-tab').forEach(b => {
+          b.classList.toggle('active',
+            b.dataset.group === btn.dataset.group ||
+            b.dataset.group === btn.dataset.group
+          );
         });
         _activeGroup = btn.dataset.group;
         Markers.setFilter(_activeGroup);
         _buildTypeChips(_activeGroup);
-        // sync sidebar tabs
-        document.querySelectorAll('.group-tab').forEach(t=>t.classList.toggle('active',t.dataset.group===_activeGroup));
-        // sync float bar
-        document.querySelectorAll('.float-pill').forEach(p=>p.classList.toggle('active',p.dataset.group===_activeGroup));
+        _syncFloatBar();
+        Stats.update();
       });
     });
   }
