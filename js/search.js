@@ -9,11 +9,13 @@ function initSearch(inputId, listId) {
 
   let timer;
 
-  function render(results) {
+  function render(results, query) {
     if (!results.length) { lst.classList.remove('open'); return; }
 
     lst.innerHTML = results.map(r => `
-      <div class="autocomplete-item" data-lat="${r.lat}" data-lng="${r.lng}">
+      <div class="autocomplete-item" data-lat="${r.lat}" data-lng="${r.lng}"
+           data-primary="${_esc(r.primary)}"
+           data-has-num="${/,\s*\d/.test(r.primary) ? '1' : '0'}">
         <div class="ac-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
@@ -21,9 +23,12 @@ function initSearch(inputId, listId) {
           </svg>
         </div>
         <div class="ac-text">
-          <div class="ac-primary">${_hl(r.primary, inp.value)}</div>
+          <div class="ac-primary">${_hl(r.primary, query)}</div>
           ${r.secondary ? `<div class="ac-secondary">${_esc(r.secondary)}</div>` : ''}
         </div>
+        ${r.primary && !/,\s*\d/.test(r.primary)
+          ? '<div style="margin-left:auto;font-family:var(--fm);font-size:9px;color:var(--tx3);flex-shrink:0;padding-left:6px">+ nº</div>'
+          : ''}
       </div>`).join('');
 
     lst.classList.add('open');
@@ -31,10 +36,19 @@ function initSearch(inputId, listId) {
     lst.querySelectorAll('.autocomplete-item').forEach(item => {
       item.addEventListener('click', () => {
         MapMod.flyTo(+item.dataset.lat, +item.dataset.lng, 17);
-        inp.value = item.querySelector('.ac-primary').textContent;
+        inp.value = item.dataset.primary;
         lst.classList.remove('open');
+
         const clr = document.getElementById('searchClear');
         if (clr) clr.classList.add('visible');
+
+        // No house number — prompt user to refine
+        if (item.dataset.hasNum !== '1') {
+          _showSearchHint(inp, 'Adicione o número: ex. , 123');
+          inp.focus();
+          const len = inp.value.length;
+          inp.setSelectionRange(len, len);
+        }
       });
     });
   }
@@ -42,11 +56,13 @@ function initSearch(inputId, listId) {
   inp.addEventListener('input', () => {
     clearTimeout(timer);
     const v = inp.value.trim();
+    _hideSearchHint(inp);
+
     const clr = document.getElementById('searchClear');
     if (clr) clr.classList.toggle('visible', v.length > 0);
-    // Minimum: 3 chars normally, 4 when digits present (slower CEP/num typing)
+
     if (v.length < (/\d/.test(v) ? 4 : 3)) { lst.classList.remove('open'); return; }
-    timer = setTimeout(async () => render(await API.searchAddress(v)), 450);
+    timer = setTimeout(async () => render(await API.searchAddress(v), v), 450);
   });
 
   inp.addEventListener('keydown', e => {
@@ -54,20 +70,38 @@ function initSearch(inputId, listId) {
   });
 
   document.addEventListener('click', e => {
-    if (!e.target.closest(`#${inputId}`) && !e.target.closest(`#${listId}`))
+    if (!e.target.closest(`#${inputId}`) && !e.target.closest(`#${listId}`)) {
       lst.classList.remove('open');
+      _hideSearchHint(inp);
+    }
   });
 }
 
-// Highlight query words in result text
+function _showSearchHint(inp, text) {
+  _hideSearchHint(inp);
+  const hint = document.createElement('div');
+  hint.className = 'search-num-hint';
+  hint.textContent = text;
+  inp.closest('.sw')?.insertAdjacentElement('afterend', hint);
+}
+
+function _hideSearchHint(inp) {
+  inp.closest('.sb-search')?.querySelector('.search-num-hint')?.remove();
+}
+
+// Highlight query words in result text — single-pass to avoid corrupting mark tags
 function _hl(text, query) {
   if (!text) return '';
-  let out = _esc(text);
-  (query || '').trim().split(/\s+/).filter(w => w.length > 1).forEach(w => {
-    const rx = new RegExp(`(${w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-    out = out.replace(rx, '<mark class="sh">$1</mark>');
-  });
-  return out;
+  const words = (query || '').trim().split(/\s+/).filter(w => w.length > 1);
+  const escaped = _esc(text);
+  if (!words.length) return escaped;
+  const pattern = words
+    .map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+    .join('|');
+  return escaped.replace(
+    new RegExp(`(${pattern})`, 'gi'),
+    '<mark class="sh">$1</mark>'
+  );
 }
 
 function _esc(s) {
