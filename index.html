@@ -428,6 +428,12 @@ body.pin-mode,body.pin-mode #map{cursor:crosshair!important}
 .ac-primary mark,.ac-secondary mark,.rp-ac-p mark,.rp-ac-s mark,mark.sh{
   background:rgba(255,107,43,.22);color:inherit;border-radius:2px;padding:0 1px;font-style:normal}
 
+/* House number hint shown after street selection */
+.search-num-hint{
+  font-family:var(--fm);font-size:10px;color:var(--accent);letter-spacing:.04em;
+  padding:5px 2px;animation:t-in .2s ease;display:flex;align-items:center;gap:5px}
+.search-num-hint::before{content:'↑';font-size:12px}
+
 /* ── filters.js generated classes ── */
 /* Group tabs */
 .group-tab{display:flex;align-items:center;gap:9px;padding:8px 11px;border-radius:8px;border:1px solid transparent;color:var(--tx2);font-size:13px;font-weight:500;transition:all var(--t);text-align:left;width:100%}
