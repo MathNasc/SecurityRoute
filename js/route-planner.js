@@ -75,17 +75,12 @@ const RoutePlanner = (() => {
     if (!inp || !ac) return;
 
     let timer;
-    let _selectedStreet = null; // track if user picked a street without number
 
     function _closeAC() { ac.classList.remove('open'); ac.innerHTML = ''; }
 
     inp.addEventListener('input', () => {
       clearTimeout(timer);
       const v = inp.value.trim();
-      _selectedStreet = null; // user is typing again — clear street hint
-
-      _hideHint(inputId);
-
       if (v.length < (/\d/.test(v) ? 4 : 3)) { _closeAC(); return; }
 
       timer = setTimeout(async () => {
@@ -96,8 +91,7 @@ const RoutePlanner = (() => {
           <div class="rp-ac-item"
                data-lat="${r.lat}"
                data-lng="${r.lng}"
-               data-primary="${_esc(r.primary)}"
-               data-has-num="${/,\s*\d/.test(r.primary) ? '1' : '0'}">
+               data-primary="${_esc(r.primary)}">
             <div class="rp-ac-ico">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
@@ -114,109 +108,27 @@ const RoutePlanner = (() => {
 
         ac.querySelectorAll('.rp-ac-item').forEach(item => {
           item.addEventListener('click', () => {
-            const lat      = parseFloat(item.dataset.lat);
-            const lng      = parseFloat(item.dataset.lng);
-            const primary  = item.dataset.primary;
-            const hasNum   = item.dataset.hasNum === '1';
-
-            inp.value = primary;
+            const lat   = parseFloat(item.dataset.lat);
+            const lng   = parseFloat(item.dataset.lng);
+            const label = item.dataset.primary;
+            inp.value   = label;
             _closeAC();
-
-            if (hasNum) {
-              // Full address with number — confirm selection immediately
-              onSelect(lat, lng, primary);
-              MapMod.flyTo(lat, lng, 17);
-              _hideHint(inputId);
-            } else {
-              // Street only — prompt user to add the number
-              _selectedStreet = { lat, lng, primary };
-              _showHint(inputId, 'Digite o número: ex. 123   — ou pressione Enter para confirmar sem número');
-
-              // Focus and position cursor at end for easy typing
-              inp.focus();
-              const len = inp.value.length;
-              inp.setSelectionRange(len, len);
-            }
+            onSelect(lat, lng, label);
+            MapMod.flyTo(lat, lng, 16);
           });
         });
       }, 380);
     });
 
-    // Enter key: confirm selection even without number
     inp.addEventListener('keydown', e => {
-      if (e.key === 'Escape') { _closeAC(); return; }
-
-      if (e.key === 'Enter' && _selectedStreet) {
-        e.preventDefault();
-        const v = inp.value.trim();
-        // Re-search with whatever the user typed (might include number now)
-        _confirmWithCurrentValue(inp, ac, onSelect);
-      }
+      if (e.key === 'Escape') _closeAC();
     });
-
-    // When user types after selecting a street (adding number), re-search
-    inp.addEventListener('input', () => {
-      if (_selectedStreet && /\d/.test(inp.value)) {
-        _selectedStreet = null; // they're refining with a number — normal search flow
-        _hideHint(inputId);
-      }
-    }, { capture: true }); // capture: run before the main handler above
 
     document.addEventListener('click', e => {
       if (!e.target.closest(`#${inputId}`) && !e.target.closest(`#${acId}`)) {
         _closeAC();
-        // Confirm pending street selection on outside click
-        if (_selectedStreet) {
-          onSelect(_selectedStreet.lat, _selectedStreet.lng, _selectedStreet.primary);
-          MapMod.flyTo(_selectedStreet.lat, _selectedStreet.lng, 15);
-          _selectedStreet = null;
-          _hideHint(inputId);
-        }
       }
     });
-
-    async function _confirmWithCurrentValue(inp, ac, onSelect) {
-      const v = inp.value.trim();
-      _closeAC();
-      _hideHint(inputId);
-      _selectedStreet = null;
-
-      if (!v) return;
-      // If value has a number, search for the specific address
-      if (/\d/.test(v)) {
-        const results = await (API.searchAddress || API.search).call(API, v);
-        if (results.length) {
-          const r = results[0];
-          inp.value = r.primary;
-          onSelect(r.lat, r.lng, r.primary);
-          MapMod.flyTo(r.lat, r.lng, 17);
-          return;
-        }
-      }
-      // Fallback: use the street coords already known
-      if (_selectedStreet) {
-        onSelect(_selectedStreet.lat, _selectedStreet.lng, v);
-        MapMod.flyTo(_selectedStreet.lat, _selectedStreet.lng, 15);
-      }
-    }
-  }
-
-  /* ── Hint helpers ── */
-  function _showHint(inputId, text) {
-    _hideHint(inputId);
-    const inp = document.getElementById(inputId);
-    if (!inp) return;
-    const hint = document.createElement('div');
-    hint.id    = `${inputId}-hint`;
-    hint.style.cssText = `
-      font-family:var(--fm);font-size:9.5px;color:var(--accent);
-      padding:4px 2px;letter-spacing:.04em;animation:t-in .2s ease`;
-    hint.textContent = text;
-    inp.closest('.rp-input-wrap')?.insertAdjacentElement('afterend', hint);
-  }
-
-  function _hideHint(inputId) {
-    document.getElementById(`${inputId}-hint`)?.remove();
   }
 
   function _rpHighlight(text, query) {
