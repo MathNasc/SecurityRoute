@@ -285,26 +285,39 @@ const API = (() => {
     ];
 
     if (parsed) {
-      /* Busca estruturada no Nominatim */
       tasks.push(_nominatimStructured(parsed.street, parsed.num, parsed.city));
 
-      /* ★ CEP range matching — a melhor fonte para numeração no BR */
-      const uf   = parsed.uf || _detectUF(parsed.city);
-      const city = parsed.city;
-      if (city || uf) {
-        tasks.push(_cepHouseSearch(parsed.street, parsed.num, city || '', uf || ''));
-      }
+      /* ★ CEP range matching — usa SP como fallback quando cidade não detectada */
+      const uf   = parsed.uf || _detectUF(parsed.city) || 'SP';
+      const city = parsed.city || '';
+      tasks.push(_cepHouseSearch(parsed.street, parsed.num, city, uf));
 
-      /* ViaCEP + Nominatim quando temos cidade + UF */
-      if (city && uf) {
-        tasks.push(_viacepAndNominatim(parsed.street, city, uf));
+      if (parsed.city && (parsed.uf || _detectUF(parsed.city))) {
+        const detectedUf = parsed.uf || _detectUF(parsed.city);
+        tasks.push(_viacepAndNominatim(parsed.street, parsed.city, detectedUf));
       }
     }
 
     const settled = await Promise.allSettled(tasks);
-    return _merge(settled.flatMap(r =>
+    const all     = settled.flatMap(r =>
       r.status === 'fulfilled' ? r.value : []
-    ));
+    );
+
+    const merged = _merge(all);
+
+    /* ── Injetar número digitado quando nenhum resultado o contém ── */
+    if (parsed?.num && merged.length) {
+      const hasNumResult = merged.some(r => /,\s*\d/.test(r.primary));
+      if (!hasNumResult) {
+        // Top result is the right street — add the typed number to its label
+        merged[0] = {
+          ...merged[0],
+          primary: `${merged[0].primary}, ${parsed.num}`,
+        };
+      }
+    }
+
+    return merged;
   }
 
   /* ViaCEP street list → geocoded via BrasilAPI */
