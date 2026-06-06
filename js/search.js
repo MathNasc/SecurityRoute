@@ -14,8 +14,7 @@ function initSearch(inputId, listId) {
 
     lst.innerHTML = results.map(r => `
       <div class="autocomplete-item" data-lat="${r.lat}" data-lng="${r.lng}"
-           data-primary="${_esc(r.primary)}"
-           data-has-num="${/,\s*\d/.test(r.primary) ? '1' : '0'}">
+           data-primary="${_esc(r.primary)}">
         <div class="ac-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
@@ -26,9 +25,6 @@ function initSearch(inputId, listId) {
           <div class="ac-primary">${_hl(r.primary, query)}</div>
           ${r.secondary ? `<div class="ac-secondary">${_esc(r.secondary)}</div>` : ''}
         </div>
-        ${r.primary && !/,\s*\d/.test(r.primary)
-          ? '<div style="margin-left:auto;font-family:var(--fm);font-size:9px;color:var(--tx3);flex-shrink:0;padding-left:6px">+ nº</div>'
-          : ''}
       </div>`).join('');
 
     lst.classList.add('open');
@@ -38,17 +34,8 @@ function initSearch(inputId, listId) {
         MapMod.flyTo(+item.dataset.lat, +item.dataset.lng, 17);
         inp.value = item.dataset.primary;
         lst.classList.remove('open');
-
         const clr = document.getElementById('searchClear');
         if (clr) clr.classList.add('visible');
-
-        // No house number — prompt user to refine
-        if (item.dataset.hasNum !== '1') {
-          _showSearchHint(inp, 'Adicione o número: ex. , 123');
-          inp.focus();
-          const len = inp.value.length;
-          inp.setSelectionRange(len, len);
-        }
       });
     });
   }
@@ -56,11 +43,8 @@ function initSearch(inputId, listId) {
   inp.addEventListener('input', () => {
     clearTimeout(timer);
     const v = inp.value.trim();
-    _hideSearchHint(inp);
-
     const clr = document.getElementById('searchClear');
     if (clr) clr.classList.toggle('visible', v.length > 0);
-
     if (v.length < (/\d/.test(v) ? 4 : 3)) { lst.classList.remove('open'); return; }
     timer = setTimeout(async () => render(await API.searchAddress(v), v), 450);
   });
@@ -70,23 +54,9 @@ function initSearch(inputId, listId) {
   });
 
   document.addEventListener('click', e => {
-    if (!e.target.closest(`#${inputId}`) && !e.target.closest(`#${listId}`)) {
+    if (!e.target.closest(`#${inputId}`) && !e.target.closest(`#${listId}`))
       lst.classList.remove('open');
-      _hideSearchHint(inp);
-    }
   });
-}
-
-function _showSearchHint(inp, text) {
-  _hideSearchHint(inp);
-  const hint = document.createElement('div');
-  hint.className = 'search-num-hint';
-  hint.textContent = text;
-  inp.closest('.sw')?.insertAdjacentElement('afterend', hint);
-}
-
-function _hideSearchHint(inp) {
-  inp.closest('.sb-search')?.querySelector('.search-num-hint')?.remove();
 }
 
 // Highlight query words in result text — single-pass to avoid corrupting mark tags
