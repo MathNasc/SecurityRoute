@@ -227,7 +227,6 @@ body{display:flex;flex-direction:column}
 .rp-hint{position:absolute;top:58px;left:50%;transform:translateX(-50%);z-index:200;background:var(--s3);border:1px solid var(--bd3);border-radius:var(--rf);padding:9px 18px;font-family:var(--fm);font-size:11px;letter-spacing:.1em;text-transform:uppercase;box-shadow:var(--sh);white-space:nowrap;display:none;align-items:center;gap:8px;animation:pulse 2s ease infinite}
 .rp-hint.vis{display:flex}
 .rp-hint-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-
 /* Route address autocomplete */
 .rp-ac{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--s2);border:1px solid var(--bd2);border-radius:8px;overflow:hidden;max-height:180px;overflow-y:auto;display:none;z-index:600;box-shadow:var(--shx)}
 .rp-ac.open{display:block}
@@ -298,7 +297,7 @@ body{display:flex;flex-direction:column}
 
 /* Map hint */
 .map-hint{position:absolute;top:58px;left:50%;transform:translateX(-50%);z-index:200;background:var(--s2);border:1px solid var(--bd2);border-radius:var(--rf);padding:9px 18px;font-family:var(--fm);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--tx2);box-shadow:var(--sh);white-space:nowrap;display:none;animation:pulse 2s ease infinite}
-.map-hint.vis{display:block}
+.map-hint.vis,.map-hint.visible{display:block}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
 body.pin-mode,body.pin-mode #map{cursor:crosshair!important}
 
@@ -409,7 +408,6 @@ body.pin-mode,body.pin-mode #map{cursor:crosshair!important}
 }
 
 /* ── map.js class aliases ── */
-.map-hint.visible{display:block}          /* map.js uses .visible, CSS had .vis */
 .ctrl-btn.loading svg{animation:spin .8s linear infinite} /* GPS button spinner */
 
 /* ── search.js clear button ── */
@@ -544,16 +542,39 @@ body.pin-mode,body.pin-mode #map{cursor:crosshair!important}
 /* Responsive */
 @media(max-width:900px){:root{--sw:300px}}
 @media(max-width:768px){
+  /* Sidebar */
   .sidebar{position:fixed;top:0;left:0;height:100vh;transform:translateX(-100%);z-index:500;box-shadow:0 8px 40px rgba(0,0,0,.7)}
   .sidebar.open{transform:translateX(0)}
   .sb-close{display:flex}
   .topbar{display:flex}
-  .sf-wrap{display:block}
-  .sf-badge{top:66px}
+
+  /* Floating search - full width below topbar */
+  .sf-wrap{display:block;top:8px;left:8px;right:8px}
+
+  /* Safety map badge — hide on mobile (already shown in sidebar) */
+  .sf-badge{display:none}
+
+  /* Map controls — move below search bar */
+  .map-ctrls{top:62px;right:10px}
+  .ctrl-btn{width:36px;height:36px}
+  .ctrl-btn svg{width:15px;height:15px}
+
+  /* Float filter bar */
   .fb-bar{bottom:86px}
+
+  /* FAB and emergency */
   .fab-wrap{bottom:22px;right:14px}
   .em-float{bottom:22px;left:14px}
+
+  /* Toast */
   .toast-wrap{bottom:88px;right:12px}
+
+  /* Autocomplete dropdowns — above everything */
+  .ac-float{z-index:500}
+  .ac-box{z-index:500}
+
+  /* Map + route hints move to bottom to avoid search bar overlap */
+  .map-hint,.rp-hint{top:auto;bottom:148px;font-size:10px;padding:7px 14px}
 }
 @media(max-width:480px){
   .ty-grid,.types-grid{grid-template-columns:repeat(2,1fr)}
@@ -881,22 +902,22 @@ body.pin-mode,body.pin-mode #map{cursor:crosshair!important}
     banner.id = 'pwa-banner';
     banner.innerHTML = `
       <div style="
-        position:fixed;bottom:90px;left:50%;transform:translateX(-50%);
+        position:fixed;bottom:100px;left:50%;transform:translateX(-50%);
         z-index:1200;display:flex;align-items:center;gap:10px;
         background:#1e293b;border:1px solid #334155;border-radius:14px;
         padding:10px 14px;box-shadow:0 8px 32px rgba(0,0,0,.7);
         font-family:system-ui,sans-serif;font-size:13px;color:#f1f5f9;
         max-width:calc(100vw - 32px);white-space:nowrap;animation:t-in .3s ease">
         <span style="font-size:22px">🛡️</span>
-        <span style="flex:1;min-width:0">Instalar Security Route</span>
+        <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis">Instalar Security Route</span>
         <button id="pwa-install" style="
           background:#ff6b2b;color:#fff;border:none;border-radius:8px;
-          padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer">
+          padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;flex-shrink:0">
           Instalar
         </button>
         <button id="pwa-dismiss" style="
           background:none;border:none;color:#94a3b8;
-          font-size:20px;cursor:pointer;padding:0 2px;line-height:1">×</button>
+          font-size:20px;cursor:pointer;padding:0 2px;line-height:1;flex-shrink:0">×</button>
       </div>`;
     document.body.appendChild(banner);
 
