@@ -1,11 +1,10 @@
 /* ════════════════════════════════════════════════════
    API — Multi-source geocoding + backend CRUD
    Sources (priority order):
-     1. ViaCEP + BrasilAPI  — CEP range matching (melhor
-        cobertura de numeração no Brasil)
-     2. Photon              — OSM alternativo
-     3. Nominatim livre     — fallback geral
-     4. Nominatim estruturado — street + housenumber param
+     1. Photon              — OSM com bias geográfico + número forçado
+     2. Nominatim estruturado — street + housenumber param
+     3. CEP range matching  — ViaCEP + BrasilAPI (melhor precisão BR)
+     4. Nominatim livre     — fallback geral
    ════════════════════════════════════════════════════ */
 const API = (() => {
   let _store  = typeof DEMO !== 'undefined' ? [...DEMO] : [];
@@ -18,6 +17,20 @@ const API = (() => {
     (typeof CFG !== 'undefined' && CFG.country) || 'br';
   const _headers = { 'Accept-Language': 'pt-BR,pt;q=0.9' };
 
+  /* ── Brasil bounding box para bias geográfico ── */
+  const BR_BBOX = '-73.99,-33.75,-34.79,5.27';
+
+  /* ── Cidades candidatas quando não há cidade na query ── */
+  /* Usadas em paralelo pelo _cepHouseSearch sem cidade */
+  const _FALLBACK_CITIES = [
+    { city: 'São Paulo',        uf: 'SP' },
+    { city: 'Guarulhos',        uf: 'SP' },
+    { city: 'Campinas',         uf: 'SP' },
+    { city: 'Santo André',      uf: 'SP' },
+    { city: 'Osasco',           uf: 'SP' },
+    { city: 'São Bernardo do Campo', uf: 'SP' },
+  ];
+
   /* ══ MERGE ════════════════════════════════════════ */
   function _merge(...lists) {
     const seen = new Set();
@@ -27,8 +40,18 @@ const API = (() => {
       seen.add(item.id);
       out.push(item);
     }
-    out.sort((a, b) => (b._hasNum ? 1 : 0) - (a._hasNum ? 1 : 0));
+    // Prioridade: tem número no primary label > _hasNum > resto
+    out.sort((a, b) => {
+      const aNum = _labelHasNumber(a.primary) ? 2 : (a._hasNum ? 1 : 0);
+      const bNum = _labelHasNumber(b.primary) ? 2 : (b._hasNum ? 1 : 0);
+      return bNum - aNum;
+    });
     return out.slice(0, 8).map(({ _hasNum, ...r }) => r);
+  }
+
+  /* Verifica se o label já contém um número de rua (ex: "Rua X, 18") */
+  function _labelHasNumber(primary) {
+    return /,\s*\d+/.test(primary || '');
   }
 
   /* ══ FORMAT HELPERS ═══════════════════════════════ */
@@ -64,16 +87,34 @@ const API = (() => {
              lat, lng, _hasNum:!!num };
   }
 
-  /* ══ SOURCE: VIACEP RAW ═══════════════════════════
-   * Returns raw ViaCEP response (array of CEP objects)
-   * Each object has { cep, logradouro, complemento,
-   *                   bairro, localidade, uf }
-   * complemento = "de 1 a 610 - lado par"
+  /* ══ INJECT NUMBER INTO RESULT ════════════════════
+   * Recebe um resultado sem número e retorna uma cópia
+   * com o número injetado no primary label.
+   * O ID recebe sufixo para evitar deduplicação com o original.
    * ════════════════════════════════════════════════ */
+  function _injectNum(result, num) {
+    if (!result || !num) return result;
+    // Já tem número? não duplicar
+    if (_labelHasNumber(result.primary)) return result;
+    return {
+      ...result,
+      id: `${result.id}-n${num}`,
+      primary: `${result.primary}, ${num}`,
+      _hasNum: true,
+    };
+  }
+
+  /* ══ SOURCE: VIACEP RAW ═══════════════════════════ */
   async function _viacepRaw(street, city, uf) {
+    // Guard: ViaCEP exige cidade e UF preenchidos
+    if (!city || !uf || city.trim().length < 2) return [];
+
     const cleanStreet = street
-      .replace(/,?\s*\d+.*$/, '') // remove trailing number
+      .replace(/,?\s*\d+.*$/, '') // remove número se vier junto
       .trim();
+
+    if (cleanStreet.length < 3) return [];
+
     const url = `https://viacep.com.br/ws/` +
       `${encodeURIComponent(uf)}/` +
       `${encodeURIComponent(city)}/` +
@@ -88,23 +129,47 @@ const API = (() => {
   }
 
   /* ══ SOURCE: CEP HOUSE NUMBER MATCH ══════════════
-   * Uses ViaCEP complemento ranges to find the right
-   * CEP for a specific house number, then gets exact
-   * coordinates from BrasilAPI v2.
+   * Usa ViaCEP complemento ranges para achar o CEP certo,
+   * depois pega coordenadas exatas da BrasilAPI v2.
+   *
+   * NOVO: quando city é vazio, tenta cidades candidatas em paralelo.
    * ════════════════════════════════════════════════ */
   async function _cepHouseSearch(street, num, city, uf) {
-    const detectedUf = uf || _detectUF(city);
-    if (!detectedUf || !city) return [];
+    if (!num) return [];
 
+    const detectedUf = uf || _detectUF(city) || 'SP';
+
+    /* Quando temos cidade, busca direta */
+    if (city && city.trim().length > 1) {
+      return _cepHouseSearchForCity(street, num, city, detectedUf);
+    }
+
+    /* Sem cidade: tenta cidades candidatas em paralelo */
+    const candidates = _FALLBACK_CITIES.filter(c =>
+      !uf || c.uf === detectedUf
+    );
+
+    const settled = await Promise.allSettled(
+      candidates.map(c => _cepHouseSearchForCity(street, num, c.city, c.uf))
+    );
+
+    const results = settled
+      .filter(r => r.status === 'fulfilled' && r.value.length > 0)
+      .flatMap(r => r.value);
+
+    return results;
+  }
+
+  async function _cepHouseSearchForCity(street, num, city, uf) {
+    if (!city || !uf) return [];
     try {
-      const ceps = await _viacepRaw(street, city, detectedUf);
+      const ceps = await _viacepRaw(street, city, uf);
       if (!ceps.length) return [];
 
       const targetNum = parseInt(num);
+      if (isNaN(targetNum)) return [];
 
-      // Find CEP whose complemento range covers the house number
       let best = ceps.find(c => _cepCoversNumber(c.complemento, targetNum));
-      // Fallback: closest range
       if (!best) {
         best = ceps.reduce((closest, c) => {
           const mid = _cepRangeMid(c.complemento);
@@ -116,7 +181,6 @@ const API = (() => {
       }
       if (!best) return [];
 
-      // Get coordinates from BrasilAPI v2
       const cepClean = best.cep.replace(/\D/g, '');
       const coords = await _brasilApiCep(cepClean);
       if (!coords.length) return [];
@@ -124,7 +188,7 @@ const API = (() => {
       return [{
         id:        `cep-num-${cepClean}-${num}`,
         primary:   `${best.logradouro || street}, ${num}`,
-        secondary: [best.bairro, best.localidade || city, detectedUf]
+        secondary: [best.bairro, best.localidade || city, uf]
                      .filter(Boolean).join(', '),
         lat: coords[0].lat,
         lng: coords[0].lng,
@@ -133,7 +197,6 @@ const API = (() => {
     } catch { return []; }
   }
 
-  /* Does ViaCEP complemento range cover this number? */
   function _cepCoversNumber(complemento, num) {
     if (!complemento || !num) return false;
     const m = complemento.match(/de\s*(\d+)\s*a\s*(\d+)/i);
@@ -148,7 +211,6 @@ const API = (() => {
     return true;
   }
 
-  /* Midpoint of a CEP range for "closest" fallback */
   function _cepRangeMid(complemento) {
     if (!complemento) return null;
     const m = complemento.match(/de\s*(\d+)\s*a\s*(\d+)/i);
@@ -176,10 +238,9 @@ const API = (() => {
     } catch { return []; }
   }
 
-  /* ══ SOURCE: PHOTON ═══════════════════════════════ */
+  /* ══ SOURCE: PHOTON — busca geral ════════════════ */
   async function _photon(q) {
-    const p = new URLSearchParams({ q, lang:'pt', limit:6,
-      bbox:'-73.99,-33.75,-34.79,5.27' });
+    const p = new URLSearchParams({ q, lang:'pt', limit:6, bbox: BR_BBOX });
     try {
       const r = await fetch(`https://photon.komoot.io/api/?${p}`,
                             { headers: _headers });
@@ -189,10 +250,38 @@ const API = (() => {
     } catch { return []; }
   }
 
-  /* ══ SOURCE: NOMINATIM FREE ═══════════════════════ */
+  /* ══ SOURCE: PHOTON — forçando número ════════════
+   * Quando temos rua + número, tenta variações da query
+   * com cidades conhecidas para aumentar chance de match.
+   * ════════════════════════════════════════════════ */
+  async function _photonWithNum(street, num) {
+    const variants = [
+      `${street}, ${num}, São Paulo`,
+      `${street}, ${num}, SP`,
+      `${street} ${num}`,
+    ];
+
+    const settled = await Promise.allSettled(
+      variants.map(async (q) => {
+        const p = new URLSearchParams({ q, lang:'pt', limit:3, bbox: BR_BBOX });
+        const r = await fetch(`https://photon.komoot.io/api/?${p}`, { headers: _headers });
+        if (!r.ok) return [];
+        const d = await r.json();
+        return (d.features || []).map(_fmtPhoton).filter(Boolean);
+      })
+    );
+
+    return settled
+      .filter(r => r.status === 'fulfilled')
+      .flatMap(r => r.value);
+  }
+
+  /* ══ SOURCE: NOMINATIM LIVRE ══════════════════════ */
   async function _nominatimFree(q) {
-    const p = new URLSearchParams({ q, format:'jsonv2', addressdetails:1,
-                                     limit:6, countrycodes:_country() });
+    const p = new URLSearchParams({
+      q, format:'jsonv2', addressdetails:1,
+      limit:6, countrycodes:_country(),
+    });
     try {
       const r = await fetch(`${_nominatim()}/search?${p}`,
                             { headers: _headers });
@@ -201,12 +290,19 @@ const API = (() => {
     } catch { return []; }
   }
 
-  /* ══ SOURCE: NOMINATIM STRUCTURED ════════════════ */
+  /* ══ SOURCE: NOMINATIM ESTRUTURADO ═══════════════
+   * Usa parâmetros street + city separados — mais preciso
+   * para house numbers do que a query livre.
+   * city é opcional: sem ele ainda funciona para BR.
+   * ════════════════════════════════════════════════ */
   async function _nominatimStructured(street, num, city) {
-    const params = { format:'jsonv2', addressdetails:1, limit:5,
-                     countrycodes:_country(),
-                     street:`${num} ${street}` };
+    const params = {
+      format:'jsonv2', addressdetails:1, limit:5,
+      countrycodes:_country(),
+      street: `${num} ${street}`,
+    };
     if (city) params.city = city;
+
     try {
       const r = await fetch(
         `${_nominatim()}/search?${new URLSearchParams(params)}`,
@@ -215,6 +311,20 @@ const API = (() => {
       if (!r.ok) return [];
       return (await r.json()).map(_fmtNominatim);
     } catch { return []; }
+  }
+
+  /* ══ NOMINATIM ESTRUTURADO + CIDADES CANDIDATAS ══
+   * Quando não há cidade na query, tenta em paralelo
+   * com múltiplas cidades para aumentar cobertura.
+   * ════════════════════════════════════════════════ */
+  async function _nominatimStructuredMulti(street, num) {
+    const cities = ['São Paulo', 'Guarulhos', 'Campinas', 'Osasco'];
+    const settled = await Promise.allSettled(
+      cities.map(c => _nominatimStructured(street, num, c))
+    );
+    return settled
+      .filter(r => r.status === 'fulfilled')
+      .flatMap(r => r.value);
   }
 
   /* ══ UF DETECTION ════════════════════════════════ */
@@ -241,10 +351,18 @@ const API = (() => {
     return _ufMap[city.toLowerCase().trim()] || null;
   }
 
-  /* ══ ADDRESS PARSER ══════════════════════════════ */
+  /* ══ ADDRESS PARSER ══════════════════════════════
+   * Aceita formatos:
+   *   "Rua X, 18"
+   *   "Rua X, 18, São Paulo"
+   *   "Rua X, 18, São Paulo, SP"
+   *   "Av. Y, 1500 - Bairro, Cidade"
+   * ════════════════════════════════════════════════ */
   function _parseAddress(q) {
-    // "Street name, NUMBER[, City[, UF]]"
-    const m = q.match(
+    // Remove traço com bairro antes de parsear: "Rua X, 18 - Bairro" → "Rua X, 18"
+    const normalized = q.replace(/\s*[-–]\s*[^,]+$/, '').trim();
+
+    const m = normalized.match(
       /^(.+?),\s*(\d+[A-Za-z]?)\s*(?:,\s*([^,]+?))?(?:,\s*([A-Z]{2}))?\s*$/
     );
     if (!m) return null;
@@ -270,7 +388,7 @@ const API = (() => {
       return _merge(await _nominatimFree(q));
     }
 
-    /* ── Normalizar "Rua X123" → "Rua X, 123" ── */
+    /* ── Normalizar "RuaX123" → "Rua X, 123" ── */
     const norm = q
       .replace(/([a-záàãâéêíóôõúüç])(\d)/gi, '$1, $2')
       .replace(/,\s*,/g, ',')
@@ -279,42 +397,66 @@ const API = (() => {
     const parsed = _parseAddress(norm);
 
     /* ── Tarefas paralelas ── */
-    const tasks = [
-      _photon(norm),
-      _nominatimFree(norm),
-    ];
+    const tasks = [];
 
     if (parsed) {
-      tasks.push(_nominatimStructured(parsed.street, parsed.num, parsed.city));
+      const { street, num, city, uf } = parsed;
+      const detectedUf = uf || _detectUF(city) || 'SP';
 
-      /* ★ CEP range matching — usa SP como fallback quando cidade não detectada */
-      const uf   = parsed.uf || _detectUF(parsed.city) || 'SP';
-      const city = parsed.city || '';
-      tasks.push(_cepHouseSearch(parsed.street, parsed.num, city, uf));
+      /*
+       * Grupo 1: fontes que usam o número diretamente
+       * Estas têm maior chance de retornar house_number
+       */
+      tasks.push(_photonWithNum(street, num));
+      tasks.push(_nominatimStructured(street, num, city));
 
-      if (parsed.city && (parsed.uf || _detectUF(parsed.city))) {
-        const detectedUf = parsed.uf || _detectUF(parsed.city);
-        tasks.push(_viacepAndNominatim(parsed.street, parsed.city, detectedUf));
+      // Sem cidade: tenta Nominatim com várias cidades candidatas
+      if (!city) {
+        tasks.push(_nominatimStructuredMulti(street, num));
+      }
+
+      // CEP range matching
+      tasks.push(_cepHouseSearch(street, num, city || '', detectedUf));
+
+      // ViaCEP quando temos cidade + UF
+      if (city && (uf || _detectUF(city))) {
+        tasks.push(_viacepAndNominatim(street, city, detectedUf));
       }
     }
 
+    /*
+     * Grupo 2: fontes genéricas (rua sem número)
+     * Sempre rodadas — servem de fallback para coordenadas da rua
+     */
+    tasks.push(_photon(norm));
+    tasks.push(_nominatimFree(norm));
+
     const settled = await Promise.allSettled(tasks);
-    const all     = settled.flatMap(r =>
+    const all = settled.flatMap(r =>
       r.status === 'fulfilled' ? r.value : []
     );
 
-    const merged = _merge(all);
+    let merged = _merge(all);
 
-    /* ── Injetar número digitado quando nenhum resultado o contém ── */
+    /*
+     * ── Injeção de número garantida ──
+     * Se o usuário digitou um número e os resultados não o mostram,
+     * injeta o número em TODOS os resultados que representam a mesma rua.
+     * Assim o usuário sempre vê o que digitou refletido nos resultados.
+     */
     if (parsed?.num && merged.length) {
-      const hasNumResult = merged.some(r => /,\s*\d/.test(r.primary));
-      if (!hasNumResult) {
-        // Top result is the right street — add the typed number to its label
-        merged[0] = {
-          ...merged[0],
-          primary: `${merged[0].primary}, ${parsed.num}`,
-        };
-      }
+      const num = parsed.num;
+      merged = merged.map(r => {
+        if (_labelHasNumber(r.primary)) return r; // já tem número, não duplicar
+        return _injectNum(r, num);
+      });
+
+      // Re-sort: com número agora injetado, mantém consistência
+      merged.sort((a, b) => {
+        const aHas = _labelHasNumber(a.primary) ? 1 : 0;
+        const bHas = _labelHasNumber(b.primary) ? 1 : 0;
+        return bHas - aHas;
+      });
     }
 
     return merged;
