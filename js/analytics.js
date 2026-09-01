@@ -4,7 +4,7 @@
    Renders directly into #analyticsWrap.
    ════════════════════════════════════════════════════ */
 
-const Analytics = (() => {
+var Analytics = (() => {
 
   /* ── Public: full render ── */
   function render(occurrences) {

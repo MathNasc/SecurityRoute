@@ -6,7 +6,7 @@
      3. CEP range matching  — ViaCEP + BrasilAPI (melhor precisão BR)
      4. Nominatim livre     — fallback geral
    ════════════════════════════════════════════════════ */
-const API = (() => {
+var API = (() => {
   let _store  = typeof DEMO !== 'undefined' ? [...DEMO] : [];
   let _nextId = 100;
 

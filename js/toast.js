@@ -1,7 +1,7 @@
 /* ════════════════════════════════════════════════════
    TOAST MODULE
    ════════════════════════════════════════════════════ */
-const Toast = (() => {
+var Toast = (() => {
   const wrap = document.getElementById('toastWrap');
 
   function show(title, msg='', type='info', ms=3500) {

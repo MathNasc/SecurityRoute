@@ -2,7 +2,7 @@
    SHEET — criação de ocorrência
    Fluxo: Grupos → Tipos → Pin → Formulário
    ════════════════════════════════════════════════════ */
-const Sheet = (() => {
+var Sheet = (() => {
   let _type = null, _lat = null, _lng = null, _addr = null;
   const $ = id => document.getElementById(id);
 

@@ -3,12 +3,12 @@
   "version": "1.0.0",
   "description": "Plataforma colaborativa de segurança urbana",
   "scripts": {
-    "predev": "node generate-env.js",
-    "dev": "serve -s . -l 3000",
-    "prebuild": "node generate-env.js",
-    "build": "mkdir -p dist && cp -r css icons js index.html manifest.json sw.js dist/ 2>/dev/null || true"
+    "dev": "vite --port 3000",
+    "build": "vite build && cp -r css icons js manifest.json sw.js dist/ 2>/dev/null || true",
+    "preview": "vite preview --port 3000"
   },
   "devDependencies": {
-    "serve": "^14.2.1"
+    "serve": "^14.2.1",
+    "vite": "^8.2.2"
   }
 }

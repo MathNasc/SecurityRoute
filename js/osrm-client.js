@@ -2,7 +2,7 @@
    OSRM CLIENT — js/osrm-client.js
    ════════════════════════════════════════════════════ */
 
-const OSRMClient = {
+var OSRMClient = {
   /**
    * Fetch route alternatives between two coordinates.
    * Public OSRM demo only guarantees the 'driving' profile.

@@ -4,7 +4,7 @@
    Used when no backend is available; replace with API call in prod.
    ════════════════════════════════════════════════════ */
 
-const RISK_CFG = {
+var RISK_CFG = {
   weights: {
     assalto: 10, tentativa_assalto: 8, furto: 7, area_perigosa: 9,
     presenca_suspeita: 5, vandalismo: 4, rua_escura: 3, falta_iluminacao: 3,
@@ -75,7 +75,7 @@ function _riskColorHex(s) {
 }
 
 /* ── Public module ── */
-const RiskEngine = {
+var RiskEngine = {
   /**
    * Score a route against a list of incidents.
    * @param {Array<[lat, lng]>} coords  - decoded polyline

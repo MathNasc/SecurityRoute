@@ -1,7 +1,7 @@
 /* ════════════════════════════════════════════════════
    HEATMAP — leaflet.heat integration
    ════════════════════════════════════════════════════ */
-const Heatmap = (() => {
+var Heatmap = (() => {
   let _layer = null;
   let _map   = null;
   let _active = false;
@@ -47,7 +47,7 @@ const Heatmap = (() => {
 /* ════════════════════════════════════════════════════
    SAFETY SCORE — índice de segurança em tempo real
    ════════════════════════════════════════════════════ */
-const SafetyScore = (() => {
+var SafetyScore = (() => {
   let _map, _el, _timer;
 
   function init(map) {

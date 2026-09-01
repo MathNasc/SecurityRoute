@@ -4,7 +4,7 @@
    Only adds markers not yet in Markers — no flicker.
    ════════════════════════════════════════════════════ */
 
-const Realtime = (() => {
+var Realtime = (() => {
   const INTERVAL_MS  = 3 * 60 * 1000;  // 3 minutes
   const NOTIFY_LIMIT = 5;              // max toasts at once
 

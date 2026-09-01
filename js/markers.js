@@ -1,7 +1,7 @@
 /* ════════════════════════════════════════════════════
    MARKERS — icons, cluster, popups, filtros
    ════════════════════════════════════════════════════ */
-const Markers = (() => {
+var Markers = (() => {
   let _map, _cluster;
   let _all = [];
   let _activeGroup = 'all';

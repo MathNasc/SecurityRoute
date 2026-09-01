@@ -132,11 +132,14 @@
     Toast.info('Marcadores removidos', '', 2000);
   });
   
-  document.getElementById('layerBtn')?.addEventListener('click', () => {
-    const current = localStorage.getItem('sr_map_style') || 'carto';
-    const next = current === 'carto' ? 'osm' : 'carto';
-    MapMod.setTileLayer(next);
-    Toast.info('Estilo de mapa alterado', '', 2000);
+  document.getElementById('themeCartoBtn')?.addEventListener('click', () => {
+    MapMod.setTileLayer('carto');
+    Toast.info('Modo Escuro (Carto) ativado', '', 2000);
+  });
+  
+  document.getElementById('themeOsmBtn')?.addEventListener('click', () => {
+    MapMod.setTileLayer('osm');
+    Toast.info('Modo Claro (OSM) ativado', '', 2000);
   });
 
   /* ── Emergency ── */

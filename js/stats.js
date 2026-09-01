@@ -3,7 +3,7 @@
    Counts only currently visible markers (respects all
    active filters: group, type, and time period).
    ════════════════════════════════════════════════════ */
-const Stats = {
+var Stats = {
   update() {
     const c = Markers.counts(); // already filters by visible
 

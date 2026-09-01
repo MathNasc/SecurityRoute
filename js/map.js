@@ -1,7 +1,7 @@
 /* ════════════════════════════════════════════════════
    MAP — Leaflet init, GPS, pin mode
    ════════════════════════════════════════════════════ */
-const MapMod = (() => {
+var MapMod = (() => {
   let _map, _selecting = false, _onSelect = null, _tempMarker = null;
   let _currentLayer = null;
 
@@ -23,11 +23,13 @@ const MapMod = (() => {
   function setTileLayer(type) {
     if (_currentLayer) _map.removeLayer(_currentLayer);
     
-    const cartoKey = window.ENV?.CARTO_API_KEY;
+    var cartoKey = window.ENV?.CARTO_API_KEY;
     let url, attr;
     
-    if (type === 'carto' && cartoKey) {
-      url = `https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?api_key=${cartoKey}`;
+    if (type === 'carto') {
+      url = cartoKey 
+        ? `https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?api_key=${cartoKey}`
+        : `https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png`;
       attr = '© <a href="https://carto.com/">CARTO</a> | © <a href="https://openstreetmap.org/copyright">OSM</a>';
       document.body.classList.remove('map-osm');
     } else {

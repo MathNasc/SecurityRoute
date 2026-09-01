@@ -1,1 +1,0 @@
-window.ENV = { CARTO_API_KEY: "eyJhbGciOiJIUzI1NiJ9.eyJhIjoiYWNfbXA4ajM1czUiLCJqdGkiOiI5ZmM0ZjA2OCJ9.4EGWVVdZ2hXAUlxJqxXorcDz3zobbfgTqd9LrwZO0F0" };

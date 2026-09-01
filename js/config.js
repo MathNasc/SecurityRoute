@@ -6,16 +6,16 @@
 window.SR_API_URL = window.SR_API_URL || null;
 
 /* ── Tiles & map defaults ── */
-const cartoKey = window.ENV?.CARTO_API_KEY;
-const tileUrl = cartoKey 
+var cartoKey = window.ENV?.CARTO_API_KEY;
+var tileUrl = cartoKey 
   ? `https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?api_key=${cartoKey}`
-  : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+  : `https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png`;
 
-const tileAttr = cartoKey
+var tileAttr = cartoKey
   ? '© <a href="https://carto.com/">CARTO</a> | © <a href="https://openstreetmap.org/copyright">OSM</a>'
-  : '© <a href="https://openstreetmap.org/copyright">OSM</a>';
+  : '© <a href="https://carto.com/">CARTO</a> | © <a href="https://openstreetmap.org/copyright">OSM</a>';
 
-const CFG = {
+var CFG = {
   center:  [-23.5505, -46.6333],
   zoom:    13,
   maxZoom: 19,
@@ -27,7 +27,7 @@ const CFG = {
 };
 
 /* ── Grupos de ocorrência ── */
-const GROUPS = {
+var GROUPS = {
   security: {
     id:    'security',
     label: 'Segurança Pública',
@@ -55,7 +55,7 @@ const GROUPS = {
 };
 
 /* ── Tipos de ocorrência ── */
-const TYPES = {
+var TYPES = {
   /* ── Segurança Pública ── */
   assalto: {
     label:'Assalto', group:'security', weight:10, color:'#f43f5e',
@@ -140,14 +140,14 @@ const TYPES = {
 };
 
 /* Safety score thresholds */
-const SAFETY = {
+var SAFETY = {
   safe:    { min:70, label:'Seguro',     color:'#10b981', bg:'rgba(16,185,129,.12)', dot:'#10b981' },
   caution: { min:40, label:'Atenção',    color:'#f59e0b', bg:'rgba(245,158,11,.12)', dot:'#f59e0b' },
   danger:  { min:0,  label:'Alto Risco', color:'#f43f5e', bg:'rgba(244,63,94,.12)',  dot:'#f43f5e' },
 };
 
 /* ── Demo data (expanded across São Paulo) ── */
-const DEMO = [
+var DEMO = [
   {id:1, type:'assalto',           lat:-23.5289, lng:-46.3635, description:'Roubo de celular',          createdAt:'2024-03-10T10:00:00Z'},
   {id:2, type:'assalto',           lat:-23.5398, lng:-46.3475, description:'Assalto à mão armada',       createdAt:'2024-03-11T22:30:00Z'},
   {id:3, type:'assalto',           lat:-23.5502, lng:-46.6341, description:'Roubo de veículo',           createdAt:'2024-03-12T19:15:00Z'},

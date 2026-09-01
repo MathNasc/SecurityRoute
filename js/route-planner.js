@@ -6,7 +6,7 @@
         Nominatim autocomplete (same pattern as sidebar)
    ════════════════════════════════════════════════════ */
 
-const RoutePlanner = (() => {
+var RoutePlanner = (() => {
   // ── State ──────────────────────────────────────────
   let _oLat = null, _oLng = null, _oLabel = '';
   let _dLat = null, _dLng = null, _dLabel = '';

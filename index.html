@@ -609,6 +609,7 @@ body.pin-mode,body.pin-mode #map{cursor:crosshair!important}
     <div class="sb-tabs">
       <button class="sb-tab active" data-panel="mapPanel">Mapa</button>
       <button class="sb-tab" data-panel="routePanel">Rota Segura</button>
+      <button class="sb-tab" data-panel="configPanel">Ajustes</button>
     </div>
 
     <!-- MAP PANEL -->
@@ -757,6 +758,43 @@ body.pin-mode,body.pin-mode #map{cursor:crosshair!important}
         </div>
       </div>
     </div>
+
+    <!-- CONFIG PANEL -->
+    <div class="sb-panel" id="configPanel" style="overflow-y:auto">
+      <div class="rp-section">
+        <span class="sec-lbl" style="padding:14px 0 10px">Aparência do Mapa</span>
+        
+        <div style="display:flex; flex-direction:column; gap:12px; margin-top:8px;">
+          <button class="config-theme-btn" id="themeCartoBtn" style="display:flex; align-items:center; gap:12px; padding:16px; background:var(--s2); border:1px solid var(--bd); border-radius:12px; cursor:pointer; text-align:left; color:var(--tx1);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+            <div>
+              <div style="font-weight:600; font-size:14px; margin-bottom:4px;">Modo Escuro</div>
+              <div style="font-size:12px; color:var(--tx2);">Mapa estético premium (Carto)</div>
+            </div>
+          </button>
+
+          <button class="config-theme-btn" id="themeOsmBtn" style="display:flex; align-items:center; gap:12px; padding:16px; background:var(--s2); border:1px solid var(--bd); border-radius:12px; cursor:pointer; text-align:left; color:var(--tx1);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
+              <circle cx="12" cy="12" r="5"></circle>
+              <line x1="12" y1="1" x2="12" y2="3"></line>
+              <line x1="12" y1="21" x2="12" y2="23"></line>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+              <line x1="1" y1="12" x2="3" y2="12"></line>
+              <line x1="21" y1="12" x2="23" y2="12"></line>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            </svg>
+            <div>
+              <div style="font-weight:600; font-size:14px; margin-bottom:4px;">Modo Claro</div>
+              <div style="font-size:12px; color:var(--tx2);">Mapa padrão (OpenStreetMap)</div>
+            </div>
+          </button>
+        </div>
+      </div>
+    </div>
   </aside>
 
   <main class="map-wrap">
@@ -776,7 +814,6 @@ body.pin-mode,body.pin-mode #map{cursor:crosshair!important}
     </div>
     <div class="map-ctrls">
       <button class="ctrl-btn" id="gpsBtn" title="Minha localização"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg></button>
-      <button class="ctrl-btn" id="layerBtn" title="Alternar Mapa"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="3 6 12 10 21 6 12 2 3 6"/><polygon points="3 11 12 15 21 11"/><polygon points="3 16 12 20 21 16"/></svg></button>
       <button class="ctrl-btn" id="heatBtn" title="Heatmap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 6c0 0-4 3-4 6s4 6 4 6 4-3 4-6-4-6-4-6z"/></svg></button>
       <button class="ctrl-btn" id="clrBtn" title="Limpar marcadores"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>
     </div>
@@ -838,7 +875,14 @@ body.pin-mode,body.pin-mode #map{cursor:crosshair!important}
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
-<script src="js/env.js"></script>
+<script>
+  (() => {
+    const key = "%VITE_CARTO_API_KEY%";
+    window.ENV = {
+      CARTO_API_KEY: key.startsWith("%VITE_") ? "" : key
+    };
+  })();
+</script>
 <script src="js/config.js"></script>
 <script src="js/toast.js"></script>
 <script src="js/api.js"></script>

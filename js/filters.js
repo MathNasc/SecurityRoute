@@ -1,7 +1,7 @@
 /* ════════════════════════════════════════════════════
    FILTERS — grupos, tipos, horário
    ════════════════════════════════════════════════════ */
-const Filters = (() => {
+var Filters = (() => {
   let _activeGroup = 'all';
   let _activeTime  = 'all'; // 'all' | 'day' | 'night'
 
