@@ -288,7 +288,7 @@ body{display:flex;flex-direction:column}
 .ctrl-btn.spin svg{animation:spin .8s linear infinite}
 
 /* Float filter bar */
-.fb-bar{position:absolute;bottom:96px;left:50%;transform:translateX(-50%);z-index:200;display:flex;align-items:center;gap:4px;background:var(--s2);border:1px solid var(--bd2);border-radius:var(--rf);box-shadow:var(--sh);padding:4px 5px;white-space:nowrap;max-width:calc(100vw - 20px);overflow-x:auto}
+.fb-bar{position:absolute;bottom:26px;left:50%;transform:translateX(-50%);z-index:200;display:flex;align-items:center;gap:4px;background:var(--s2);border:1px solid var(--bd2);border-radius:var(--rf);box-shadow:var(--sh);padding:4px 5px;white-space:nowrap;max-width:calc(100vw - 20px);overflow-x:auto}
 .fb-bar::-webkit-scrollbar{height:0}
 .fb-pill{display:flex;align-items:center;gap:5px;padding:6px 12px;border-radius:var(--rf);font-family:var(--fm);font-size:10px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--tx3);background:transparent;border:none;cursor:pointer;transition:all var(--t);white-space:nowrap}
 .fb-pill:hover{background:var(--s4);color:var(--tx2)}
@@ -302,7 +302,7 @@ body{display:flex;flex-direction:column}
 body.pin-mode,body.pin-mode #map{cursor:crosshair!important}
 
 /* FAB */
-.fab-wrap{position:absolute;bottom:26px;right:18px;z-index:300;display:flex;flex-direction:column;align-items:flex-end;gap:9px}
+.fab-wrap{position:absolute;bottom:80px;right:18px;z-index:300;display:flex;flex-direction:column;align-items:flex-end;gap:9px}
 .fab-menu{display:flex;flex-direction:column;gap:8px;align-items:flex-end;pointer-events:none;opacity:0;transform:translateY(8px) scale(.96);transition:all var(--t)}
 .fab-menu.open{pointer-events:all;opacity:1;transform:none}
 .fab-row{display:flex;align-items:center;gap:9px;border:none;cursor:pointer;transition:all var(--ts)}
@@ -317,7 +317,7 @@ body.pin-mode,body.pin-mode #map{cursor:crosshair!important}
 .fab-main svg{width:22px;height:22px;transition:all var(--t)}
 
 /* Emergency float */
-.em-float{position:absolute;bottom:26px;left:18px;z-index:300}
+.em-float{position:absolute;bottom:80px;left:18px;z-index:300}
 .btn-em-f{display:flex;align-items:center;gap:7px;padding:9px 14px;border-radius:var(--rf);background:var(--s2);border:1px solid rgba(244,63,94,.28);color:#fb7185;font-family:var(--fm);font-size:11.5px;font-weight:500;box-shadow:var(--sh);letter-spacing:.06em;transition:all var(--t)}
 .btn-em-f:hover{background:var(--sec-dim);border-color:var(--sec);box-shadow:0 0 16px rgba(244,63,94,.3)}
 .em-dot{width:7px;height:7px;border-radius:50%;background:var(--sec);animation:blink 1.2s ease infinite;box-shadow:0 0 5px rgba(244,63,94,.8)}
@@ -556,15 +556,16 @@ body.pin-mode,body.pin-mode #map{cursor:crosshair!important}
 
   /* Map controls — move below search bar */
   .map-ctrls{top:62px;right:10px}
+  .leaflet-top.leaflet-left{margin-top:70px}
   .ctrl-btn{width:36px;height:36px}
   .ctrl-btn svg{width:15px;height:15px}
 
   /* Float filter bar */
-  .fb-bar{bottom:86px}
+  .fb-bar{bottom:22px}
 
   /* FAB and emergency */
-  .fab-wrap{bottom:22px;right:14px}
-  .em-float{bottom:22px;left:14px}
+  .fab-wrap{bottom:74px;right:14px}
+  .em-float{bottom:74px;left:14px}
 
   /* Toast */
   .toast-wrap{bottom:88px;right:12px}

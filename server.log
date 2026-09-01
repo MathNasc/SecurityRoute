@@ -1,0 +1,25 @@
+◇ injected env (0) from .env // tip: ◈ encrypted .env [www.dotenvx.com]
+◇ injected env (0) from .env // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+Server is running on port 3001
+Error seeding data: DrizzleQueryError: Failed query: select "id", "type", "lat", "lng", "description", "created_at" from "occurrences" limit $1
+params: 1
+    at NodePgPreparedQuery.queryWithCache (/app/applet/node_modules/src/pg-core/session.ts:73:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async <anonymous> (/app/applet/node_modules/src/node-postgres/session.ts:154:19)
+    at async <anonymous> (/app/applet/server.ts:54:22) {
+  query: 'select "id", "type", "lat", "lng", "description", "created_at" from "occurrences" limit $1',
+  params: [ 1 ],
+  cause: Error: connect ECONNREFUSED 127.0.0.1:5432
+      at /app/applet/node_modules/pg-pool/index.js:45:11
+      at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+      at async <anonymous> (/app/applet/node_modules/src/node-postgres/session.ts:161:13)
+      at async NodePgPreparedQuery.queryWithCache (/app/applet/node_modules/src/pg-core/session.ts:71:12)
+      at async <anonymous> (/app/applet/node_modules/src/node-postgres/session.ts:154:19)
+      at async <anonymous> (/app/applet/server.ts:54:22) {
+    errno: -111,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 5432
+  }
+}

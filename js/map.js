@@ -11,7 +11,7 @@ var MapMod = (() => {
       zoomControl: false, attributionControl: true,
     });
     
-    L.control.zoom({ position: 'bottomright' }).addTo(_map);
+    L.control.zoom({ position: 'topleft' }).addTo(_map);
     _map.on('click', _onClick);
     
     const savedStyle = localStorage.getItem('sr_map_style') || 'carto';

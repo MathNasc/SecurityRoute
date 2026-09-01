@@ -304,7 +304,7 @@ body{display:flex;flex-direction:column}
 
 /* ── Float filter bar ── */
 .float-filter-bar{
-  position:absolute;bottom:96px;left:50%;transform:translateX(-50%);
+  position:absolute;bottom:26px;left:50%;transform:translateX(-50%);
   z-index:200;display:flex;align-items:center;gap:4px;
   background:var(--s2);border:1px solid var(--bd2);border-radius:var(--r-f);
   box-shadow:var(--sh-lg);padding:4px 5px;
@@ -361,7 +361,7 @@ body{display:flex;flex-direction:column}
 @keyframes hint-pulse{0%,100%{opacity:1}50%{opacity:.55}}
 
 /* ── FAB ── */
-.fab-wrap{position:absolute;bottom:26px;right:18px;z-index:300;display:flex;flex-direction:column;align-items:flex-end;gap:9px}
+.fab-wrap{position:absolute;bottom:80px;right:18px;z-index:300;display:flex;flex-direction:column;align-items:flex-end;gap:9px}
 .fab-menu{display:flex;flex-direction:column;gap:8px;align-items:flex-end;pointer-events:none;opacity:0;transform:translateY(8px) scale(.96);transition:all var(--t)}
 .fab-menu.open{pointer-events:all;opacity:1;transform:none}
 .fab-type{display:flex;align-items:center;gap:9px;border:none;cursor:pointer;transition:all var(--ts)}
@@ -382,7 +382,7 @@ body{display:flex;flex-direction:column}
 .fab-main svg{width:22px;height:22px;transition:all var(--t)}
 
 /* ── Emergency float ── */
-.emergency-float{position:absolute;bottom:26px;left:18px;z-index:300}
+.emergency-float{position:absolute;bottom:80px;left:18px;z-index:300}
 .btn-em-float{
   display:flex;align-items:center;gap:7px;padding:9px 14px;border-radius:var(--r-f);
   background:var(--s2);border:1px solid rgba(244,63,94,.28);
@@ -554,10 +554,11 @@ body.pin-mode #map,body.pin-mode{cursor:crosshair!important}
   .topbar{display:flex}
   .map-wrap{flex:1}
   .search-float{display:block}
+  .leaflet-top.leaflet-left{margin-top:70px}
   .safety-map-badge{top:68px}
-  .float-filter-bar{bottom:88px}
-  .fab-wrap{bottom:22px;right:14px}
-  .emergency-float{bottom:22px;left:14px}
+  .float-filter-bar{bottom:22px}
+  .fab-wrap{bottom:74px;right:14px}
+  .emergency-float{bottom:74px;left:14px}
   .toast-wrap{bottom:90px;right:12px}
 }
 
