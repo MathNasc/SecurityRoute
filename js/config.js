@@ -6,12 +6,21 @@
 window.SR_API_URL = window.SR_API_URL || null;
 
 /* ── Tiles & map defaults ── */
+const cartoKey = window.ENV?.CARTO_API_KEY;
+const tileUrl = cartoKey 
+  ? `https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?api_key=${cartoKey}`
+  : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+
+const tileAttr = cartoKey
+  ? '© <a href="https://carto.com/">CARTO</a> | © <a href="https://openstreetmap.org/copyright">OSM</a>'
+  : '© <a href="https://openstreetmap.org/copyright">OSM</a>';
+
 const CFG = {
   center:  [-23.5505, -46.6333],
   zoom:    13,
   maxZoom: 19,
-  tile:    'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-  tileAttr:'© <a href="https://carto.com/">CARTO</a> | © <a href="https://openstreetmap.org/copyright">OSM</a>',
+  tile:    tileUrl,
+  tileAttr:tileAttr,
   nominatim:'https://nominatim.openstreetmap.org',
   osrm: 'https://router.project-osrm.org',
   country: 'br',

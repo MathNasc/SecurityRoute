@@ -12,14 +12,15 @@
    └─────────────────────────────────────────────────┘
    ════════════════════════════════════════════════════ */
 
-const CACHE_VERSION  = 'sr-v1';
-const TILE_CACHE     = 'sr-tiles-v1';
+const CACHE_VERSION  = 'sr-v4';
+const TILE_CACHE     = 'sr-tiles-v4';
 const MAX_TILE_CACHE = 500;
 
 /* ── App shell — recursos que funcionam offline ── */
 const APP_SHELL = [
   '/',
   '/index.html',
+  '/js/env.js',
   '/js/config.js',
   '/js/api.js',
   '/js/toast.js',
@@ -148,9 +149,18 @@ async function _networkFirst(request, cacheName, maxAgeSeconds = null) {
       cache.put(request, response.clone());
     }
     return response;
-  } catch {
+  } catch (error) {
     const cached = await caches.match(request);
-    return cached || _offlineFallback();
+    if (cached) return cached;
+    
+    // Se for uma requisição de API/JSON, retorne um erro formatado em JSON
+    if (request.headers.get('Accept')?.includes('application/json') || request.url.includes('api') || request.url.includes('osrm') || request.url.includes('nominatim')) {
+      return new Response(JSON.stringify({ error: 'offline', message: 'Serviço indisponível ou offline.' }), {
+        status: 503,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+    return _offlineFallback();
   }
 }
 
@@ -209,9 +219,7 @@ function _offlineFallback() {
 
 function _isTile(url) {
   return (
-    url.hostname.includes('cartocdn.com') ||
-    url.hostname.includes('tile.openstreetmap.org') ||
-    url.hostname.includes('basemaps.cartocdn.com')
+    url.hostname.includes('tile.openstreetmap.org') || url.hostname.includes('cartocdn.com')
   );
 }
 

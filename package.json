@@ -2,13 +2,13 @@
   "name": "security-route",
   "version": "1.0.0",
   "description": "Plataforma colaborativa de segurança urbana",
-  "main": "server.js",
   "scripts": {
-    "dev": "node server.js",
-    "start": "node server.js",
-    "build": "echo \"No build step required\""
+    "predev": "node generate-env.js",
+    "dev": "serve -s . -l 3000",
+    "prebuild": "node generate-env.js",
+    "build": "mkdir -p dist && cp -r css icons js index.html manifest.json sw.js dist/ 2>/dev/null || true"
   },
-  "dependencies": {
-    "express": "^4.19.0"
+  "devDependencies": {
+    "serve": "^14.2.1"
   }
 }
