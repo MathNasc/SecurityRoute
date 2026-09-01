@@ -3,18 +3,44 @@
    ════════════════════════════════════════════════════ */
 const MapMod = (() => {
   let _map, _selecting = false, _onSelect = null, _tempMarker = null;
+  let _currentLayer = null;
 
   function init() {
     _map = L.map('map', {
       center: CFG.center, zoom: CFG.zoom, maxZoom: CFG.maxZoom,
       zoomControl: false, attributionControl: true,
     });
-    L.tileLayer(CFG.tile, {
-      attribution: CFG.tileAttr, subdomains: 'abcd', maxZoom: CFG.maxZoom,
-    }).addTo(_map);
+    
     L.control.zoom({ position: 'bottomright' }).addTo(_map);
     _map.on('click', _onClick);
+    
+    const savedStyle = localStorage.getItem('sr_map_style') || 'carto';
+    setTileLayer(savedStyle);
+    
     return _map;
+  }
+
+  function setTileLayer(type) {
+    if (_currentLayer) _map.removeLayer(_currentLayer);
+    
+    const cartoKey = window.ENV?.CARTO_API_KEY;
+    let url, attr;
+    
+    if (type === 'carto' && cartoKey) {
+      url = `https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?api_key=${cartoKey}`;
+      attr = '© <a href="https://carto.com/">CARTO</a> | © <a href="https://openstreetmap.org/copyright">OSM</a>';
+      document.body.classList.remove('map-osm');
+    } else {
+      url = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+      attr = '© <a href="https://openstreetmap.org/copyright">OSM</a>';
+      document.body.classList.add('map-osm');
+    }
+    
+    _currentLayer = L.tileLayer(url, {
+      attribution: attr, subdomains: 'abcd', maxZoom: CFG.maxZoom,
+    }).addTo(_map);
+    
+    localStorage.setItem('sr_map_style', type);
   }
 
   function getMap() { return _map; }
@@ -70,5 +96,5 @@ const MapMod = (() => {
     cb({ lat, lng, address });
   }
 
-  return { init, getMap, flyTo, locate, startSelect, stopSelect };
+  return { init, getMap, flyTo, locate, startSelect, stopSelect, setTileLayer };
 })();

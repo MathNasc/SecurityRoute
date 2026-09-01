@@ -131,6 +131,13 @@
     Markers.clear(); Stats.update();
     Toast.info('Marcadores removidos', '', 2000);
   });
+  
+  document.getElementById('layerBtn')?.addEventListener('click', () => {
+    const current = localStorage.getItem('sr_map_style') || 'carto';
+    const next = current === 'carto' ? 'osm' : 'carto';
+    MapMod.setTileLayer(next);
+    Toast.info('Estilo de mapa alterado', '', 2000);
+  });
 
   /* ── Emergency ── */
   document.querySelectorAll('[data-emergency], #emSb, #emMap').forEach(btn => {

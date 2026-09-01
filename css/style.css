@@ -572,3 +572,8 @@ body.pin-mode #map,body.pin-mode{cursor:crosshair!important}
 /* Utilities */
 .hidden{display:none!important}
 
+
+/* ── OSM Map Filter ── */
+.map-osm .leaflet-layer, .map-osm .leaflet-control-zoom-in, .map-osm .leaflet-control-zoom-out, .map-osm .leaflet-control-attribution {
+  filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
+}
