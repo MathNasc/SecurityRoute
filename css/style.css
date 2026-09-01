@@ -554,7 +554,7 @@ body.pin-mode #map,body.pin-mode{cursor:crosshair!important}
   .topbar{display:flex}
   .map-wrap{flex:1}
   .search-float{display:block}
-  .leaflet-top.leaflet-left{margin-top:70px}
+  .leaflet-top.leaflet-left{margin-top:80px !important;}
   .safety-map-badge{top:68px}
   .float-filter-bar{bottom:22px}
   .fab-wrap{bottom:74px;right:14px}
@@ -580,3 +580,6 @@ body.pin-mode #map,body.pin-mode{cursor:crosshair!important}
 }
 
 .config-theme-btn:hover { background: var(--s3) !important; border-color: var(--accent) !important; }
+.leaflet-top.leaflet-left {
+  top: 70px !important;
+}
