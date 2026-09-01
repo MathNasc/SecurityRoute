@@ -12,8 +12,8 @@
    └─────────────────────────────────────────────────┘
    ════════════════════════════════════════════════════ */
 
-const CACHE_VERSION  = 'sr-v9';
-const TILE_CACHE     = 'sr-tiles-v9';
+const CACHE_VERSION  = 'sr-v10';
+const TILE_CACHE     = 'sr-tiles-v10';
 const MAX_TILE_CACHE = 500;
 
 /* ── App shell — recursos que funcionam offline ── */

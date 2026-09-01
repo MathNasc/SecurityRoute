@@ -22,10 +22,21 @@ var RoutePlanner = (() => {
   const map = () => MapMod.getMap();
 
   // ── Pin icons ───────────────────────────────────────
-  const _pinIcon = (emoji) => L.divIcon({
-    html: `<div style="font-size:22px;line-height:1;filter:drop-shadow(0 2px 6px rgba(0,0,0,.7))">${emoji}</div>`,
-    className: '', iconSize: [26, 26], iconAnchor: [13, 22],
-  });
+  const _pinIcon = (type) => {
+    const isOrigin = type === 'origin';
+    const fill = isOrigin ? '#10b981' : '#f43f5e';
+    
+    let svg = isOrigin 
+      ? `<svg width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="#131722" stroke="${fill}" stroke-width="3"/><circle cx="12" cy="12" r="4" fill="${fill}"/></svg>`
+      : `<svg width="24" height="34" viewBox="0 0 24 34"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="${fill}" stroke="#131722" stroke-width="2"/><circle cx="12" cy="9" r="3.5" fill="#131722"/></svg>`;
+      
+    return L.divIcon({
+      html: `<div style="filter:drop-shadow(0 4px 6px rgba(0,0,0,0.5)); display:flex;">${svg}</div>`,
+      className: '',
+      iconSize: isOrigin ? [24, 24] : [24, 34],
+      iconAnchor: isOrigin ? [12, 12] : [12, 34],
+    });
+  };
 
   // ── CSS variable resolver ───────────────────────────
   function _resolveColor(c) {
@@ -38,13 +49,23 @@ var RoutePlanner = (() => {
   }
 
   // ── Polyline style ──────────────────────────────────
-  function _lineStyle(route, selected) {
+  function _lineStyle(route, selected, isGlow = false) {
     const color = _resolveColor(route.safetyColor);
+    if (isGlow) {
+      return {
+        color,
+        weight:    selected ? 12 : 8,
+        opacity:   selected ? 0.25 : 0.15,
+        dashArray: selected ? null : '8 10',
+        lineCap:   'round',
+        lineJoin:  'round',
+      };
+    }
     return {
       color,
-      weight:    selected ? 7 : 4,
-      opacity:   selected ? 0.9 : 0.4,
-      dashArray: selected ? null : '8 6',
+      weight:    selected ? 5 : 3,
+      opacity:   selected ? 1.0 : 0.7,
+      dashArray: selected ? null : '6 8',
       lineCap:   'round',
       lineJoin:  'round',
     };
@@ -157,7 +178,7 @@ var RoutePlanner = (() => {
     const inp = document.getElementById('rpOriginInp');
     if (inp) inp.value = label;
     if (_originMarker) _originMarker.remove();
-    _originMarker = L.marker([lat, lng], { icon: _pinIcon('🟢'), zIndexOffset: 1000 })
+    _originMarker = L.marker([lat, lng], { icon: _pinIcon('origin'), zIndexOffset: 1000 })
       .addTo(map())
       .bindPopup('<strong style="font-size:13px">Origem</strong>');
     _checkReady();
@@ -169,7 +190,7 @@ var RoutePlanner = (() => {
     const inp = document.getElementById('rpDestInp');
     if (inp) inp.value = label;
     if (_destMarker) _destMarker.remove();
-    _destMarker = L.marker([lat, lng], { icon: _pinIcon('🔴'), zIndexOffset: 1000 })
+    _destMarker = L.marker([lat, lng], { icon: _pinIcon('dest'), zIndexOffset: 1000 })
       .addTo(map())
       .bindPopup('<strong style="font-size:13px">Destino</strong>');
     _checkReady();
@@ -194,22 +215,26 @@ var RoutePlanner = (() => {
     // Unselected routes first (lower z-order)
     routes.forEach((rt, i) => {
       if (i === selectedIdx) return;
-      const line = L.polyline(rt.coords, _lineStyle(rt, false)).addTo(map());
+      const glow = L.polyline(rt.coords, _lineStyle(rt, false, true)).addTo(map());
+      const line = L.polyline(rt.coords, _lineStyle(rt, false, false)).addTo(map());
       line.on('click', () => _selectRoute(i));
-      _routeLayers.push(line);
+      glow.on('click', () => _selectRoute(i));
+      _routeLayers.push(glow, line);
     });
 
     // Selected route on top
     const sel     = routes[selectedIdx];
-    const selLine = L.polyline(sel.coords, _lineStyle(sel, true)).addTo(map());
+    const selGlow = L.polyline(sel.coords, _lineStyle(sel, true, true)).addTo(map());
+    const selLine = L.polyline(sel.coords, _lineStyle(sel, true, false)).addTo(map());
     selLine.on('click', () => _selectRoute(selectedIdx));
-    _routeLayers.push(selLine);
+    selGlow.on('click', () => _selectRoute(selectedIdx));
+    _routeLayers.push(selGlow, selLine);
 
     // Hotspot circles on selected route
     sel.hotspots.forEach(hs => {
       const circle = L.circleMarker([hs.lat, hs.lng], {
-        radius: 9, color: '#fff', weight: 2,
-        fillColor: '#ef4444', fillOpacity: 0.7,
+        radius: 8, color: '#131722', weight: 2,
+        fillColor: '#f43f5e', fillOpacity: 0.9,
       }).addTo(map()).bindPopup(`
         <div style="padding:8px 10px;font-size:12px;min-width:140px">
           <strong style="color:#ef4444">⚠️ Área de risco</strong><br/>
