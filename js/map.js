@@ -8,7 +8,7 @@ var MapMod = (() => {
   function init() {
     _map = L.map('map', {
       center: CFG.center, zoom: CFG.zoom, maxZoom: CFG.maxZoom,
-      zoomControl: false, attributionControl: true,
+      zoomControl: false, attributionControl: true, tap: false, dragging: true, touchZoom: true,
     });
     
     L.control.zoom({ position: 'topleft' }).addTo(_map);
@@ -54,6 +54,7 @@ var MapMod = (() => {
   function locate() {
     const btn = document.getElementById('gpsBtn');
     btn?.classList.add('loading');
+    if (navigator.vibrate) navigator.vibrate(50);
     if (!navigator.geolocation) {
       Toast.error('Geolocalização não suportada');
       btn?.classList.remove('loading');
@@ -62,6 +63,7 @@ var MapMod = (() => {
     navigator.geolocation.getCurrentPosition(
       ({ coords: { latitude: lat, longitude: lng, accuracy } }) => {
         btn?.classList.remove('loading');
+        if (navigator.vibrate) navigator.vibrate([50, 50, 50]);
         _map.flyTo([lat, lng], 16, { animate: true, duration: 1 });
         L.circle([lat, lng], { radius: accuracy, color:'#f97316', fillOpacity:.06, weight:1 }).addTo(_map);
         L.circleMarker([lat, lng], { radius:8, color:'#fff', weight:3, fillColor:'#f97316', fillOpacity:1 }).addTo(_map);
@@ -86,9 +88,13 @@ var MapMod = (() => {
   }
 
   async function _onClick(e) {
+    // Dismiss keyboard on any map tap
+    if (document.activeElement) document.activeElement.blur();
+    
     if (!_selecting || !_onSelect) return;
     const { lat, lng } = e.latlng;
     if (_tempMarker) _map.removeLayer(_tempMarker);
+    if (navigator.vibrate) navigator.vibrate(60);
     _tempMarker = L.circleMarker([lat, lng], {
       radius: 10, color: '#fff', weight: 2.5, fillColor: '#ff6b2b', fillOpacity: .9,
     }).addTo(_map);

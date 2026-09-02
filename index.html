@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"/>
 <title>Security Route</title>
 
 <!-- PWA -->
@@ -890,14 +890,14 @@ body.pin-mode,body.pin-mode #map{cursor:crosshair!important}
 <script src="js/risk-engine.js"></script>
 <script src="js/osrm-client.js"></script>
 <script src="js/markers.js"></script>
-<script src="js/map.js?v=2"></script>
+<script src="js/map.js?v=4"></script>
 <script src="js/heatmap.js"></script>
-<script src="js/search.js"></script>
-<script src="js/filters.js"></script>
+<script src="js/search.js?v=4"></script>
+<script src="js/filters.js?v=4"></script>
 <script src="js/stats.js"></script>
 <script src="js/analytics.js"></script>
 <script src="js/realtime.js"></script>
-<script src="js/sheet.js"></script>
+<script src="js/sheet.js?v=4"></script>
 <script src="js/route-planner.js"></script>
 <script src="js/app.js"></script>
 
@@ -959,5 +959,15 @@ body.pin-mode,body.pin-mode #map{cursor:crosshair!important}
 <style>
 .leaflet-top.leaflet-left {
   top: 70px !important;
+}
+</style>
+<style>
+/* Mobile First Active States */
+@media (hover: none) {
+  .ctrl-btn:active, .fab:active, .fb-pill:active, .group-card:active, .type-tile:active, .btn-primary:active {
+    transform: scale(0.96) !important;
+    transition: transform 0.1s !important;
+    opacity: 0.8;
+  }
 }
 </style>

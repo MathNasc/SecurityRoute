@@ -10,7 +10,8 @@ function initSearch(inputId, listId) {
   let timer;
 
   function render(results, query) {
-    if (!results.length) { lst.classList.remove('open'); return; }
+    if (!results.length) { lst.classList.remove('open');
+        inp.blur(); return; }
 
     lst.innerHTML = results.map(r => `
       <div class="autocomplete-item" data-lat="${r.lat}" data-lng="${r.lng}"
@@ -34,6 +35,7 @@ function initSearch(inputId, listId) {
         MapMod.flyTo(+item.dataset.lat, +item.dataset.lng, 17);
         inp.value = item.dataset.primary;
         lst.classList.remove('open');
+        inp.blur();
         const clr = document.getElementById('searchClear');
         if (clr) clr.classList.add('visible');
       });
@@ -45,17 +47,20 @@ function initSearch(inputId, listId) {
     const v = inp.value.trim();
     const clr = document.getElementById('searchClear');
     if (clr) clr.classList.toggle('visible', v.length > 0);
-    if (v.length < (/\d/.test(v) ? 4 : 3)) { lst.classList.remove('open'); return; }
+    if (v.length < (/\d/.test(v) ? 4 : 3)) { lst.classList.remove('open');
+        inp.blur(); return; }
     timer = setTimeout(async () => render(await API.searchAddress(v), v), 450);
   });
 
   inp.addEventListener('keydown', e => {
     if (e.key === 'Escape') lst.classList.remove('open');
+        inp.blur();
   });
 
   document.addEventListener('click', e => {
     if (!e.target.closest(`#${inputId}`) && !e.target.closest(`#${listId}`))
       lst.classList.remove('open');
+        inp.blur();
   });
 }
 

@@ -53,7 +53,7 @@
 
 /* ── Reset ── */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;overflow:hidden;font-family:var(--font-b);background:var(--bg);color:var(--tx);-webkit-font-smoothing:antialiased}
+html,body{overscroll-behavior:none;height:100%;overflow:hidden;font-family:var(--font-b);background:var(--bg);color:var(--tx);-webkit-font-smoothing:antialiased}
 button{cursor:pointer;font-family:inherit;border:none;background:none}
 input,textarea{font-family:inherit;outline:none}
 ul{list-style:none}
@@ -261,7 +261,7 @@ body{display:flex;flex-direction:column}
 
 /* ══════════════ MAP ══════════════ */
 .map-wrap{flex:1;position:relative;overflow:hidden}
-#map{position:absolute;inset:0;z-index:1}
+#map{position:absolute;inset:0;z-index:1;touch-action:none;}
 
 /* Leaflet overrides */
 .leaflet-container{background:#0a0d14;font-family:var(--font-b)}
@@ -582,4 +582,13 @@ body.pin-mode #map,body.pin-mode{cursor:crosshair!important}
 .config-theme-btn:hover { background: var(--s3) !important; border-color: var(--accent) !important; }
 .leaflet-top.leaflet-left {
   top: 70px !important;
+}
+
+/* Mobile First Active States */
+@media (hover: none) {
+  .ctrl-btn:active, .fab:active, .fb-pill:active, .group-card:active, .type-tile:active, .btn-primary:active {
+    transform: scale(0.96) !important;
+    transition: transform 0.1s !important;
+    opacity: 0.8;
+  }
 }

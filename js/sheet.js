@@ -96,7 +96,10 @@ var Sheet = (() => {
     }).join('');
     el.dataset.built = '1';
     el.querySelectorAll('.group-card').forEach(btn => {
-      btn.addEventListener('click', () => _showTypes(btn.dataset.group));
+      btn.addEventListener('click', () => {
+        if (navigator.vibrate) navigator.vibrate(20);
+        _showTypes(btn.dataset.group);
+      });
     });
   }
 
@@ -126,6 +129,7 @@ var Sheet = (() => {
 
     el.querySelectorAll('.type-tile').forEach(btn => {
       btn.addEventListener('click', () => {
+        if (navigator.vibrate) navigator.vibrate(30);
         _type = btn.dataset.type;
         const t = TYPES[_type];
         // Atualiza label no step de pin
@@ -158,6 +162,7 @@ var Sheet = (() => {
       Markers.add(occ, true);
       Stats.update();
       close();
+      if (navigator.vibrate) navigator.vibrate([100, 50, 100]); // Success vibration
       Toast.success('Ocorrência registrada!', 'Obrigado por contribuir com a comunidade.');
     } catch {
       Toast.error('Erro ao registrar', 'Verifique sua conexão e tente novamente.');
@@ -198,6 +203,38 @@ var Sheet = (() => {
     $('sheetClose')?.addEventListener('click',    () => close());
     $('sheetCancel')?.addEventListener('click',   () => close());
     $('sheetConfirm')?.addEventListener('click',  () => _confirm());
+
+    // Swipe to close functionality
+    let startY = 0;
+    let currentY = 0;
+    const sheetEl = $('sheet');
+    const header = document.querySelector('.sheet-header');
+    
+    if (header && sheetEl) {
+      header.addEventListener('touchstart', e => {
+        startY = e.touches[0].clientY;
+        sheetEl.style.transition = 'none';
+      }, { passive: true });
+      
+      header.addEventListener('touchmove', e => {
+        currentY = e.touches[0].clientY;
+        const dy = currentY - startY;
+        if (dy > 0) {
+          sheetEl.style.transform = `translateY(${dy}px)`;
+        }
+      }, { passive: true });
+      
+      header.addEventListener('touchend', () => {
+        sheetEl.style.transition = 'transform .3s ease';
+        const dy = currentY - startY;
+        if (dy > 100) {
+          close();
+        }
+        sheetEl.style.transform = '';
+        startY = 0;
+        currentY = 0;
+      });
+    }
 
     /*
      * "Marcar no Mapa" — fecha tudo e entra no modo de seleção.

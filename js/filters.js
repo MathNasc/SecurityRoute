@@ -27,6 +27,7 @@ var Filters = (() => {
 
     el.querySelectorAll('.group-tab').forEach(btn => {
       btn.addEventListener('click', () => {
+        if (navigator.vibrate) navigator.vibrate(15);
         el.querySelectorAll('.group-tab').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         _activeGroup = btn.dataset.group;
@@ -51,6 +52,7 @@ var Filters = (() => {
       </button>`).join('');
     el.querySelectorAll('.type-chip').forEach(btn => {
       btn.addEventListener('click', () => {
+        if (navigator.vibrate) navigator.vibrate(15);
         btn.classList.toggle('active');
         Markers.toggleType(btn.dataset.type);
         Stats.update();
@@ -78,6 +80,7 @@ var Filters = (() => {
 
     el.querySelectorAll('.time-pill').forEach(btn => {
       btn.addEventListener('click', () => {
+        if (navigator.vibrate) navigator.vibrate(15);
         el.querySelectorAll('.time-pill').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         _activeTime = btn.dataset.time;
@@ -113,6 +116,7 @@ var Filters = (() => {
 
     bar.querySelectorAll('.float-pill').forEach(btn => {
       btn.addEventListener('click', () => {
+        if (navigator.vibrate) navigator.vibrate(15);
         // Sync both float bar and sidebar tabs
         document.querySelectorAll('.float-pill, .group-tab').forEach(b => {
           b.classList.toggle('active',
