@@ -1,7 +1,7 @@
 {
   "name": "security-route",
   "version": "1.0.0",
-  "description": "Plataforma colaborativa de segurança urbana",
+  "description": "Plataforma colaborativa de seguranca urbana",
   "scripts": {
     "dev": "concurrently \"npx tsx server.ts > server.log 2>&1\" \"vite --port 3000\"",
     "build": "vite build && cp -r css icons js manifest.json sw.js dist/ 2>/dev/null || true",
@@ -25,6 +25,7 @@
     "dotenv": "^17.4.2",
     "drizzle-orm": "^0.45.2",
     "express": "^5.2.1",
+    "express-rate-limit": "^8.7.0",
     "is-sea": "^0.3.1",
     "pg": "^8.23.0",
     "vite-express": "^0.22.1"

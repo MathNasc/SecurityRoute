@@ -132,14 +132,20 @@
     Toast.info('Marcadores removidos', '', 2000);
   });
   
-  document.getElementById('themeCartoBtn')?.addEventListener('click', () => {
-    MapMod.setTileLayer('carto');
-    Toast.info('Modo Escuro (Carto) ativado', '', 2000);
-  });
+  let _currentStyleIdx = 0;
+  const _mapStyles = ['carto', 'mapbox', 'osm'];
+  const _mapStyleNames = ['Carto Dark', 'Mapbox Dark', 'OSM Light'];
   
-  document.getElementById('themeOsmBtn')?.addEventListener('click', () => {
-    MapMod.setTileLayer('osm');
-    Toast.info('Modo Claro (OSM) ativado', '', 2000);
+  const savedStyle = localStorage.getItem('sr_map_style') || 'carto';
+  _currentStyleIdx = _mapStyles.indexOf(savedStyle);
+  if (_currentStyleIdx === -1) _currentStyleIdx = 0;
+
+  document.getElementById('layerBtn')?.addEventListener('click', () => {
+    if (navigator.vibrate) navigator.vibrate(20);
+    _currentStyleIdx = (_currentStyleIdx + 1) % _mapStyles.length;
+    const newStyle = _mapStyles[_currentStyleIdx];
+    MapMod.setTileLayer(newStyle);
+    Toast.info(`Estilo de mapa: ${_mapStyleNames[_currentStyleIdx]}`, '', 2000);
   });
 
   /* ── Emergency ── */

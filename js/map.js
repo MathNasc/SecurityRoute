@@ -24,6 +24,7 @@ var MapMod = (() => {
     if (_currentLayer) _map.removeLayer(_currentLayer);
     
     var cartoKey = window.ENV?.CARTO_API_KEY;
+    var mapboxToken = window.ENV?.MAPBOX_TOKEN;
     let url, attr;
     
     if (type === 'carto') {
@@ -31,6 +32,10 @@ var MapMod = (() => {
         ? `https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?api_key=${cartoKey}`
         : `https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png`;
       attr = '© <a href="https://carto.com/">CARTO</a> | © <a href="https://openstreetmap.org/copyright">OSM</a>';
+      document.body.classList.remove('map-osm');
+    } else if (type === 'mapbox') {
+      url = `https://api.mapbox.com/styles/v1/mapbox/dark-v11/tiles/256/{z}/{x}/{y}@2x?access_token=${mapboxToken}`;
+      attr = '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> © <a href="http://www.openstreetmap.org/copyright">OSM</a>';
       document.body.classList.remove('map-osm');
     } else {
       url = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
