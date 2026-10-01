@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "description": "Plataforma colaborativa de seguranca urbana",
   "scripts": {
-    "dev": "concurrently \"npx tsx server.ts > server.log 2>&1\" \"vite --port 3000\"",
+    "dev": "tsx server.ts",
     "build": "vite build && cp -r css icons js manifest.json sw.js dist/ 2>/dev/null || true",
-    "start": "NODE_ENV=production npx tsx server.ts",
-    "preview": "concurrently \"NODE_ENV=production npx tsx server.ts\" \"vite preview --port 3000\""
+    "start": "NODE_ENV=production tsx server.ts",
+    "preview": "NODE_ENV=production tsx server.ts"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",

@@ -1,6 +1,6 @@
 {
   "name": "security-route-app",
-  "description": "Security Route Platform",
+  "description": "Plataforma colaborativa de segurança urbana — mapa inteligente de riscos e rotas seguras.",
   "requestFramePermissions": [
     "geolocation"
   ],
