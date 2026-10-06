@@ -1,5 +1,5 @@
 /* ════════════════════════════════════════════════════
-   MAP — Leaflet init, GPS, pin mode & smooth touch
+   MAP — Leaflet init, GPS, pin mode & smooth touch momentum
    ════════════════════════════════════════════════════ */
 var MapMod = (() => {
   let _map, _selecting = false, _onSelect = null, _tempMarker = null;
@@ -13,14 +13,11 @@ var MapMod = (() => {
       maxZoom: CFG.maxZoom,
       zoomControl: false,
       attributionControl: true,
-      tap: false,               // Desativa emulação de tap antiga do Leaflet
+      tap: false,               // Desativa emulação antiga de tap do Leaflet
       dragging: true,
       touchZoom: true,
       bounceAtZoomLimits: false,
-      inertia: true,
-      inertiaDeceleration: 3000, // Desaceleração suave e fluida
-      inertiaMaxSpeed: 2500,     // Permite arremesso com velocidade
-      easeLinearity: 0.2,
+      inertia: false,           // Substituído pelo nosso controlador de momento nativo para mobile
       zoomAnimation: true,
       fadeAnimation: true,
       markerZoomAnimation: true,
@@ -29,14 +26,14 @@ var MapMod = (() => {
     
     L.control.zoom({ position: 'topleft' }).addTo(_map);
     
-    // Eventos de clique para mouse/desktop
-    _map.on('click', _onClick);
-
     // Suaviza a visão do mapa durante o arrasto no mobile (Google Maps style)
     _map.on('movestart', () => document.body.classList.add('map-panning'));
     _map.on('moveend', () => document.body.classList.remove('map-panning'));
 
-    // Eventos de toque de alta precisão para mobile
+    // Eventos de clique para mouse/desktop
+    _map.on('click', _onClick);
+
+    // Controlador de física de inércia e toque de alta precisão para mobile
     _setupTouchListeners();
     
     const savedStyle = localStorage.getItem('sr_map_style') || 'carto';
@@ -51,7 +48,7 @@ var MapMod = (() => {
     return _map;
   }
 
-  /* ── Detecção precisa de toque rápido (tap) em mobile ── */
+  /* ── Física de Inércia Fluida (Fling) e Toque Preciso para Mobile ── */
   function _setupTouchListeners() {
     const mapEl = document.getElementById('map');
     if (!mapEl) return;
@@ -59,28 +56,83 @@ var MapMod = (() => {
     let touchStartX = 0;
     let touchStartY = 0;
     let touchStartTime = 0;
+    let touchMoveHistory = [];
 
     mapEl.addEventListener('touchstart', (e) => {
-      if (!_selecting || e.touches.length !== 1) return;
-      touchStartX = e.touches[0].clientX;
-      touchStartY = e.touches[0].clientY;
-      touchStartTime = Date.now();
+      if (e.touches.length === 1) {
+        // Interrompe animação em andamento se o usuário tocar enquanto desliza
+        try { _map.stop(); } catch (err) {}
+
+        const touch = e.touches[0];
+        touchStartX = touch.clientX;
+        touchStartY = touch.clientY;
+        touchStartTime = Date.now();
+        touchMoveHistory = [{ x: touch.clientX, y: touch.clientY, t: touchStartTime }];
+      }
+    }, { passive: true });
+
+    mapEl.addEventListener('touchmove', (e) => {
+      if (e.touches.length === 1) {
+        const touch = e.touches[0];
+        const now = Date.now();
+        touchMoveHistory.push({ x: touch.clientX, y: touch.clientY, t: now });
+        // Mantém apenas os pontos dos últimos 90 milissegundos para cálculo de velocidade instantânea
+        if (touchMoveHistory.length > 8) {
+          touchMoveHistory.shift();
+        }
+      }
     }, { passive: true });
 
     mapEl.addEventListener('touchend', (e) => {
-      if (!_selecting || !e.changedTouches || e.changedTouches.length === 0) return;
+      if (!e.changedTouches || e.changedTouches.length === 0) return;
       const touch = e.changedTouches[0];
+      const now = Date.now();
       const distX = Math.abs(touch.clientX - touchStartX);
       const distY = Math.abs(touch.clientY - touchStartY);
-      const elapsed = Date.now() - touchStartTime;
+      const totalElapsed = now - touchStartTime;
 
-      // Se moveu menos de 15px e foi rápido (< 450ms), é um toque deliberado na rua
-      if (distX < 15 && distY < 15 && elapsed < 450) {
-        const rect = mapEl.getBoundingClientRect();
-        const containerPoint = L.point(touch.clientX - rect.left, touch.clientY - rect.top);
-        const latlng = _map.containerPointToLatLng(containerPoint);
-        _triggerSelection(latlng);
+      // ── MODO 1: Se estiver marcando ocorrência (Pin Mode) ──
+      if (_selecting) {
+        // Toque rápido com micro-movimento menor que 18px ➔ Seleciona rua imediatamente
+        if (distX < 18 && distY < 18 && totalElapsed < 450) {
+          const rect = mapEl.getBoundingClientRect();
+          const containerPoint = L.point(touch.clientX - rect.left, touch.clientY - rect.top);
+          const latlng = _map.containerPointToLatLng(containerPoint);
+          _triggerSelection(latlng);
+        }
+        return;
       }
+
+      // ── MODO 2: Navegação Normal ➔ Inércia e Deslize Fluido (Fling) ──
+      // Filtra pontos recentes dos últimos 100ms
+      const recentMoves = touchMoveHistory.filter(p => now - p.t <= 100);
+      if (recentMoves.length >= 2) {
+        const first = recentMoves[0];
+        const last = recentMoves[recentMoves.length - 1];
+        const dt = Math.max(last.t - first.t, 10);
+        const dx = last.x - first.x;
+        const dy = last.y - first.y;
+
+        const vx = dx / dt; // pixels por milissegundo
+        const vy = dy / dt;
+        const speed = Math.hypot(vx, vy);
+
+        // Se o usuário arremessou o dedo com velocidade (flick/swipe)
+        if (speed > 0.28 && dt < 120) {
+          const glideDist = Math.min(speed * 340, 950);
+          const panX = (vx / speed) * glideDist;
+          const panY = (vy / speed) * glideDist;
+          const duration = Math.min(Math.max(speed * 0.38, 0.45), 1.1);
+
+          // Continua o deslize com animação suave e desaceleração natural
+          _map.panBy([-panX, -panY], {
+            animate: true,
+            duration: duration,
+            easeLinearity: 0.12,
+          });
+        }
+      }
+      touchMoveHistory = [];
     }, { passive: true });
   }
 
@@ -111,7 +163,7 @@ var MapMod = (() => {
       attribution: attr, subdomains: 'abcd', maxZoom: CFG.maxZoom,
       updateWhenIdle: false, // Atualiza tiles durante drag para fluidez
       updateWhenZooming: true,
-      keepBuffer: 4,
+      keepBuffer: 6,
     }).addTo(_map);
     
     localStorage.setItem('sr_map_style', type);
