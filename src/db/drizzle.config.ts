@@ -3,20 +3,20 @@ import * as dotenv from "dotenv";
 
 dotenv.config();
 
-const sqlHost = process.env.SQL_HOST;
-const sqlDbName = process.env.SQL_DB_NAME;
-const user = process.env.SQL_ADMIN_USER;
-const password = process.env.SQL_ADMIN_PASSWORD;
+const connectionString = process.env.DATABASE_URL;
 
 export default defineConfig({
   schema: "./src/db/schema.ts",
   out: "./drizzle",
   dialect: "postgresql",
-  dbCredentials: {
-    host: sqlHost || '127.0.0.1',
-    user: user || 'postgres',
-    password: password || 'postgres',
-    database: sqlDbName || 'postgres',
-    ssl: false,
-  },
+  dbCredentials: connectionString
+    ? { url: connectionString }
+    : {
+        host: process.env.DATABASE_HOST || process.env.SQL_HOST || '127.0.0.1',
+        port: Number(process.env.DATABASE_PORT || process.env.SQL_PORT || 5435),
+        user: process.env.DATABASE_USER || process.env.SQL_USER || process.env.SQL_ADMIN_USER || 'securityroute_user',
+        password: process.env.DATABASE_PASSWORD || process.env.SQL_PASSWORD || process.env.SQL_ADMIN_PASSWORD || '',
+        database: process.env.DATABASE_NAME || process.env.SQL_DB_NAME || 'securityroute_db',
+        ssl: false,
+      },
 });

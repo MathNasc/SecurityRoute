@@ -1,28 +1,16 @@
 import express from 'express';
 import cors from 'cors';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import * as dotenv from 'dotenv';
 import rateLimit from 'express-rate-limit';
 import isSea from 'is-sea';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { databaseService } from './src/db/databaseService.js';
 
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_KEY;
-let supabase: SupabaseClient | null = null;
-
-if (supabaseUrl && supabaseKey) {
-  try {
-    supabase = createClient(supabaseUrl, supabaseKey);
-  } catch (err) {
-    console.warn('[AI Studio] Supabase client initialization failed, using in-memory store:', err);
-  }
-}
 
 const app = express();
 app.use(cors());
@@ -37,56 +25,14 @@ const createLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-interface Occurrence {
-  id: number;
-  type: string;
-  lat: number;
-  lng: number;
-  description: string;
-  createdAt: string;
-  created_at?: string;
-}
-
-const now = Date.now();
-const initialSeedData: Occurrence[] = [
-  { id: 1, type: 'assalto', lat: -23.5289, lng: -46.3635, description: 'Roubo de celular', createdAt: new Date(now - 1000 * 60 * 30).toISOString() },
-  { id: 2, type: 'assalto', lat: -23.5398, lng: -46.3475, description: 'Assalto à mão armada', createdAt: new Date(now - 1000 * 60 * 60 * 2).toISOString() },
-  { id: 3, type: 'assalto', lat: -23.5502, lng: -46.6341, description: 'Roubo de veículo', createdAt: new Date(now - 1000 * 60 * 60 * 5).toISOString() },
-  { id: 4, type: 'furto', lat: -23.6949, lng: -46.7587, description: 'Furto em estabelecimento', createdAt: new Date(now - 1000 * 60 * 60 * 24).toISOString() },
-  { id: 5, type: 'tentativa_assalto', lat: -23.6685, lng: -46.769, description: 'Tentativa frustrada', createdAt: new Date(now - 1000 * 60 * 60 * 48).toISOString() },
-  { id: 6, type: 'area_perigosa', lat: -23.6347, lng: -46.7549, description: 'Área com alto risco noturno', createdAt: new Date(now - 1000 * 60 * 60 * 72).toISOString() },
-  { id: 7, type: 'presenca_suspeita', lat: -23.5512, lng: -46.6180, description: 'Grupo suspeito na calçada', createdAt: new Date(now - 1000 * 60 * 15).toISOString() },
-  { id: 8, type: 'vandalismo', lat: -23.5448, lng: -46.6388, description: 'Ponto de ônibus depredado', createdAt: new Date(now - 1000 * 60 * 45).toISOString() },
-  { id: 9, type: 'rua_escura', lat: -23.5620, lng: -46.6540, description: 'Sem iluminação pública', createdAt: new Date(now - 1000 * 60 * 60 * 3).toISOString() },
-  { id: 10, type: 'falta_iluminacao', lat: -23.5780, lng: -46.6710, description: 'Lâmpadas queimadas', createdAt: new Date(now - 1000 * 60 * 60 * 12).toISOString() },
-  { id: 11, type: 'alagamento', lat: -23.5664, lng: -46.5073, description: 'Via com 30cm de água', createdAt: new Date(now - 1000 * 60 * 5).toISOString() },
-  { id: 12, type: 'enchente', lat: -23.5844, lng: -46.5492, description: 'Via completamente alagada', createdAt: new Date(now - 1000 * 60 * 60).toISOString() },
-  { id: 13, type: 'alagamento', lat: -23.579, lng: -46.5798, description: 'Trânsito interrompido', createdAt: new Date(now - 1000 * 60 * 60 * 4).toISOString() },
-  { id: 14, type: 'buraco_via', lat: -23.5603, lng: -46.5996, description: 'Buraco grande na pista', createdAt: new Date(now - 1000 * 60 * 60 * 24 * 5).toISOString() },
-];
-let occurrencesStore: Occurrence[] = [...initialSeedData];
-let nextId = 15;
-
 app.get('/api/occurrences', async (req, res) => {
-  if (supabase) {
-    try {
-      const { data, error } = await supabase
-        .from('occurrences')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (!error && data) {
-        const mappedData = data.map((d: any) => ({
-          ...d,
-          createdAt: d.created_at || d.createdAt,
-        }));
-        return res.json(mappedData);
-      }
-    } catch (error) {
-      console.warn('Error fetching occurrences from Supabase, using in-memory store:', error);
-    }
+  try {
+    const occurrences = await databaseService.getAllOccurrences();
+    res.json(occurrences);
+  } catch (error) {
+    console.error('Error fetching occurrences:', error);
+    res.status(500).json({ error: 'Failed to fetch occurrences' });
   }
-  res.json(occurrencesStore);
 });
 
 app.post('/api/occurrences', createLimiter, async (req, res) => {
@@ -108,41 +54,13 @@ app.post('/api/occurrences', createLimiter, async (req, res) => {
       return res.status(400).json({ error: 'Cannot report an occurrence in the ocean' });
     }
 
-    if (supabase) {
-      try {
-        const { data, error } = await supabase
-          .from('occurrences')
-          .insert([
-            {
-              type,
-              lat: latNum,
-              lng: lngNum,
-              description,
-            }
-          ])
-          .select();
-
-        if (!error && data && data.length > 0) {
-          const mappedData = {
-            ...data[0],
-            createdAt: data[0].created_at || data[0].createdAt,
-          };
-          return res.status(201).json(mappedData);
-        }
-      } catch (err) {
-        console.warn('Error creating occurrence in Supabase, using in-memory store:', err);
-      }
-    }
-
-    const newOcc: Occurrence = {
-      id: nextId++,
+    const newOcc = await databaseService.createOccurrence({
       type,
       lat: latNum,
       lng: lngNum,
       description,
-      createdAt: new Date().toISOString(),
-    };
-    occurrencesStore.unshift(newOcc);
+    });
+
     res.status(201).json(newOcc);
   } catch (error) {
     console.error('Error creating occurrence:', error);
@@ -152,40 +70,8 @@ app.post('/api/occurrences', createLimiter, async (req, res) => {
 
 app.post('/api/seed', async (req, res) => {
   try {
-    if (supabase) {
-      try {
-        const { data: existing, error: checkError } = await supabase
-          .from('occurrences')
-          .select('id')
-          .limit(1);
-
-        if (!checkError && existing && existing.length === 0) {
-          const demoRows = initialSeedData.map(d => ({
-            type: d.type,
-            lat: d.lat,
-            lng: d.lng,
-            description: d.description,
-            created_at: d.createdAt,
-          }));
-
-          const { error: insertError } = await supabase.from('occurrences').insert(demoRows);
-          if (!insertError) {
-            return res.json({ message: 'Seeded successfully' });
-          }
-        } else if (!checkError && existing && existing.length > 0) {
-          return res.json({ message: 'Already seeded' });
-        }
-      } catch (err) {
-        console.warn('Error seeding in Supabase, using in-memory store:', err);
-      }
-    }
-
-    if (occurrencesStore.length === 0) {
-      occurrencesStore = [...initialSeedData];
-      return res.json({ message: 'Seeded successfully' });
-    }
-
-    return res.json({ message: 'Already seeded' });
+    const result = await databaseService.seedOccurrences();
+    res.json(result);
   } catch (error) {
     console.error('Error seeding data:', error);
     res.status(500).json({ error: 'Failed to seed data' });
