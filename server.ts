@@ -39,7 +39,9 @@ app.post('/api/occurrences', createLimiter, async (req, res) => {
   try {
     const { type, lat, lng, description } = req.body;
 
-    if (!type || lat === undefined || lng === undefined || !description) {
+    const descText = (description || req.body.address || '').trim();
+
+    if (!type || lat === undefined || lng === undefined) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
@@ -58,7 +60,7 @@ app.post('/api/occurrences', createLimiter, async (req, res) => {
       type,
       lat: latNum,
       lng: lngNum,
-      description,
+      description: descText,
     });
 
     res.status(201).json(newOcc);

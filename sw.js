@@ -12,8 +12,8 @@
    └─────────────────────────────────────────────────┘
    ════════════════════════════════════════════════════ */
 
-const CACHE_VERSION  = 'sr-v10';
-const TILE_CACHE     = 'sr-tiles-v10';
+const CACHE_VERSION  = 'sr-v11';
+const TILE_CACHE     = 'sr-tiles-v11';
 const MAX_TILE_CACHE = 500;
 
 /* ── App shell — recursos que funcionam offline ── */
@@ -223,9 +223,7 @@ function _isTile(url) {
 }
 
 function _isAPI(url) {
-  // Backend API — adjust to match your SR_API_URL
-  const apiHosts = ['localhost', '127.0.0.1'];
-  return apiHosts.includes(url.hostname) && url.pathname.startsWith('/occurrences');
+  return url.pathname.includes('/occurrences') || url.pathname.startsWith('/api');
 }
 
 function _isGeocoding(url) {

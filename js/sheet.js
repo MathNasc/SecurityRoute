@@ -154,7 +154,7 @@ var Sheet = (() => {
         lat:         _lat,
         lng:         _lng,
         address:     _addr   || undefined,
-        description: $('formDesc')?.value.trim() || undefined,
+        description: $('formDesc')?.value.trim() || _addr || '',
         datetime:    $('formDate')?.value
           ? new Date($('formDate').value).toISOString()
           : undefined,

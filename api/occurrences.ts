@@ -25,7 +25,9 @@ export default async function handler(req: any, res: any) {
       const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
       const { type, lat, lng, description } = body;
 
-      if (!type || lat === undefined || lng === undefined || !description) {
+      const descText = (description || body.address || '').trim();
+
+      if (!type || lat === undefined || lng === undefined) {
         return res.status(400).json({ error: 'Missing required fields' });
       }
 
@@ -44,7 +46,7 @@ export default async function handler(req: any, res: any) {
         type,
         lat: latNum,
         lng: lngNum,
-        description,
+        description: descText,
       });
 
       return res.status(201).json(newOcc);
