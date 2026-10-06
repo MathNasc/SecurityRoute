@@ -160,4 +160,44 @@
       closeFab();
     }
   });
+
+  /* ── Conectividade Mobile / PWA & Fila Offline ── */
+  window.addEventListener('offline', () => {
+    Toast.warn('Sem conexão', 'Modo offline ativado. Ocorrências criadas serão salvas no celular.');
+  });
+  window.addEventListener('online', async () => {
+    Toast.success('Conexão restabelecida', 'Sincronizando dados com o servidor...');
+    try {
+      const synced = await API.syncOfflineOccurrences();
+      if (synced > 0) {
+        Toast.success('Ocorrências enviadas!', `${synced} ocorrência(s) pendente(s) salva(s) no servidor.`);
+      }
+      const fresh = await API.getOccurrences();
+      Markers.clear();
+      Markers.addMany(fresh);
+      Stats.update();
+    } catch (e) {
+      console.warn('Erro ao ressincronizar:', e);
+    }
+  });
+
+  /* ── PWA Install Prompt ── */
+  let _deferredPrompt = null;
+  const pwaBtn = document.getElementById('pwaInstallBtn');
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    _deferredPrompt = e;
+    if (pwaBtn) pwaBtn.style.display = 'flex';
+  });
+
+  pwaBtn?.addEventListener('click', async () => {
+    if (_deferredPrompt) {
+      _deferredPrompt.prompt();
+      const { outcome } = await _deferredPrompt.userChoice;
+      if (outcome === 'accepted' && pwaBtn) {
+        pwaBtn.style.display = 'none';
+      }
+      _deferredPrompt = null;
+    }
+  });
 })();

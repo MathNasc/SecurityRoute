@@ -42,8 +42,19 @@ var Sheet = (() => {
     _closeAll(); // REMOVE backdrop completamente antes de ativar o mapa
     setTimeout(() => {
       MapMod.startSelect(({ lat, lng, address }) => {
-        _lat = lat; _lng = lng; _addr = address;
-        _openForm(); // só aqui abre o sheet novamente
+        _lat = lat; _lng = lng; _addr = address || '';
+        _openForm(); // abre o formulário instantaneamente
+
+        // Atualiza o endereço assim que a geocodificação reversa finalizar
+        window.onStreetAddressResolved = (resolvedAddress) => {
+          if (resolvedAddress) {
+            _addr = resolvedAddress;
+            const coordsEl = $('formCoords');
+            if (coordsEl) {
+              coordsEl.textContent = resolvedAddress.split(',').slice(0, 3).join(', ');
+            }
+          }
+        };
       });
     }, 180); // pequeno delay para animação de fechar
   }
@@ -162,8 +173,13 @@ var Sheet = (() => {
       Markers.add(occ, true);
       Stats.update();
       close();
-      if (navigator.vibrate) navigator.vibrate([100, 50, 100]); // Success vibration
-      Toast.success('Ocorrência registrada!', 'Obrigado por contribuir com a comunidade.');
+      if (occ.isOfflinePending) {
+        if (navigator.vibrate) navigator.vibrate([80, 50, 80]);
+        Toast.warn('Salvo localmente no celular', 'Sem conexão no momento. Será enviado ao servidor assim que o sinal voltar.');
+      } else {
+        if (navigator.vibrate) navigator.vibrate([100, 50, 100]); // Success vibration
+        Toast.success('Ocorrência registrada!', 'Obrigado por contribuir com a comunidade.');
+      }
     } catch {
       Toast.error('Erro ao registrar', 'Verifique sua conexão e tente novamente.');
     } finally {
@@ -204,36 +220,47 @@ var Sheet = (() => {
     $('sheetCancel')?.addEventListener('click',   () => close());
     $('sheetConfirm')?.addEventListener('click',  () => _confirm());
 
-    // Swipe to close functionality
+    // Swipe to dismiss bottom sheet nativo
     let startY = 0;
     let currentY = 0;
     const sheetEl = $('sheet');
-    const header = document.querySelector('.sheet-header');
+    const dragArea = document.querySelector('.sh-hdr') || document.querySelector('.sh-handle');
+    const handleBar = document.querySelector('.sh-handle');
     
-    if (header && sheetEl) {
-      header.addEventListener('touchstart', e => {
-        startY = e.touches[0].clientY;
-        sheetEl.style.transition = 'none';
-      }, { passive: true });
-      
-      header.addEventListener('touchmove', e => {
-        currentY = e.touches[0].clientY;
-        const dy = currentY - startY;
-        if (dy > 0) {
-          sheetEl.style.transform = `translateY(${dy}px)`;
-        }
-      }, { passive: true });
-      
-      header.addEventListener('touchend', () => {
-        sheetEl.style.transition = 'transform .3s ease';
-        const dy = currentY - startY;
-        if (dy > 100) {
-          close();
-        }
-        sheetEl.style.transform = '';
-        startY = 0;
-        currentY = 0;
-      });
+    if (sheetEl) {
+      const attachDrag = (el) => {
+        if (!el) return;
+        el.addEventListener('touchstart', e => {
+          if (e.touches.length !== 1) return;
+          startY = e.touches[0].clientY;
+          currentY = startY;
+          sheetEl.style.transition = 'none';
+        }, { passive: true });
+        
+        el.addEventListener('touchmove', e => {
+          if (e.touches.length !== 1) return;
+          currentY = e.touches[0].clientY;
+          const dy = currentY - startY;
+          if (dy > 0) {
+            sheetEl.style.transform = `translateY(${dy}px)`;
+          }
+        }, { passive: true });
+        
+        el.addEventListener('touchend', () => {
+          const dy = currentY - startY;
+          sheetEl.style.transition = 'transform .25s cubic-bezier(.34,1.56,.64,1)';
+          if (dy > 70) {
+            close();
+          } else {
+            sheetEl.style.transform = '';
+          }
+          startY = 0;
+          currentY = 0;
+        });
+      };
+
+      attachDrag(dragArea);
+      attachDrag(handleBar);
     }
 
     /*

@@ -492,12 +492,70 @@ var API = (() => {
     } catch { return null; }
   }
 
-  /* ══ OCCURRENCES CRUD ═════════════════════════════ */
+  /* ══ OCCURRENCES CRUD (ONLINE & OFFLINE QUEUE) ═══════ */
   async function getOccurrences() {
     if (!window.SR_API_URL) return [..._store];
-    const r = await fetch(`${window.SR_API_URL}/occurrences`);
-    if (!r.ok) throw new Error(`HTTP ${r.status}`);
-    return r.json();
+    try {
+      const r = await fetch(`${window.SR_API_URL}/occurrences`);
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const data = await r.json();
+      try {
+        localStorage.setItem('sr_cached_occurrences', JSON.stringify(data));
+      } catch (e) {}
+      return data;
+    } catch (err) {
+      // Fallback para cache local se a rede estiver fora do ar
+      const cached = localStorage.getItem('sr_cached_occurrences');
+      if (cached) {
+        try {
+          return JSON.parse(cached);
+        } catch (e) {}
+      }
+      return [..._store];
+    }
+  }
+
+  function _queueOfflineOccurrence(payload) {
+    try {
+      const queue = JSON.parse(localStorage.getItem('sr_offline_queue') || '[]');
+      queue.push(payload);
+      localStorage.setItem('sr_offline_queue', JSON.stringify(queue));
+    } catch (e) {
+      console.warn('Erro ao salvar ocorrência na fila offline:', e);
+    }
+  }
+
+  async function syncOfflineOccurrences() {
+    try {
+      const queue = JSON.parse(localStorage.getItem('sr_offline_queue') || '[]');
+      if (!queue.length) return 0;
+
+      let syncedCount = 0;
+      const remaining = [];
+
+      for (const occ of queue) {
+        try {
+          const r = await fetch(`${window.SR_API_URL}/occurrences`, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify(occ),
+          });
+          if (r.ok) {
+            syncedCount++;
+          } else {
+            remaining.push(occ);
+          }
+        } catch {
+          remaining.push(occ);
+        }
+      }
+
+      localStorage.setItem('sr_offline_queue', JSON.stringify(remaining));
+      return syncedCount;
+    } catch (e) {
+      console.warn('Erro ao sincronizar ocorrências offline:', e);
+      return 0;
+    }
   }
 
   async function createOccurrence(occ) {
@@ -507,15 +565,29 @@ var API = (() => {
       _store.push(saved);
       return saved;
     }
-    const r = await fetch(`${window.SR_API_URL}/occurrences`, {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify(payload),
-    });
-    if (!r.ok) throw new Error(`HTTP ${r.status}`);
-    return r.json();
+
+    try {
+      const r = await fetch(`${window.SR_API_URL}/occurrences`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify(payload),
+      });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return await r.json();
+    } catch (err) {
+      // Se a conexão falhou ou estiver offline, salva na fila para envio posterior
+      if (!navigator.onLine || err.message.includes('Failed to fetch') || err.message.includes('NetworkError') || err.message.includes('offline')) {
+        _queueOfflineOccurrence(payload);
+        return {
+          ...payload,
+          id: 'offline-' + Date.now(),
+          isOfflinePending: true,
+        };
+      }
+      throw err;
+    }
   }
 
   const search = searchAddress;
-  return { searchAddress, search, reverseGeocode, getOccurrences, createOccurrence };
+  return { searchAddress, search, reverseGeocode, getOccurrences, createOccurrence, syncOfflineOccurrences };
 })();
