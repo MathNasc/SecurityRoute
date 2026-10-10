@@ -1,11 +1,13 @@
 {
   "name": "security-route",
   "version": "1.0.0",
+  "type": "module",
   "description": "Plataforma colaborativa de seguranca urbana",
   "scripts": {
     "dev": "tsx server.ts",
     "build": "vite build && cp -r css icons js manifest.json sw.js dist/ 2>/dev/null || true",
-    "start": "NODE_ENV=production tsx server.ts",
+    "lint": "node --check server.ts",
+    "start": "node server.ts",
     "preview": "NODE_ENV=production tsx server.ts"
   },
   "devDependencies": {

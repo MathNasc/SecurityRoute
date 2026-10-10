@@ -91,15 +91,23 @@ var MapMod = (() => {
       const distY = Math.abs(touch.clientY - touchStartY);
       const totalElapsed = now - touchStartTime;
 
+      const isTap = distX < 25 && distY < 25 && totalElapsed < 1200;
+
       // ── MODO 1: Se estiver marcando ocorrência (Pin Mode) ──
-      if (_selecting) {
-        // Toque rápido com micro-movimento menor que 18px ➔ Seleciona rua imediatamente
-        if (distX < 18 && distY < 18 && totalElapsed < 450) {
-          const rect = mapEl.getBoundingClientRect();
-          const containerPoint = L.point(touch.clientX - rect.left, touch.clientY - rect.top);
-          const latlng = _map.containerPointToLatLng(containerPoint);
-          _triggerSelection(latlng);
-        }
+      if (_selecting && isTap) {
+        const rect = mapEl.getBoundingClientRect();
+        const containerPoint = L.point(touch.clientX - rect.left, touch.clientY - rect.top);
+        const latlng = _map.containerPointToLatLng(containerPoint);
+        _triggerSelection(latlng);
+        return;
+      }
+
+      // ── MODO 1.5: Se estiver escolhendo origem/destino de rota ──
+      if (typeof RoutePlanner !== 'undefined' && RoutePlanner.isPicking && RoutePlanner.isPicking() && isTap) {
+        const rect = mapEl.getBoundingClientRect();
+        const containerPoint = L.point(touch.clientX - rect.left, touch.clientY - rect.top);
+        const latlng = _map.containerPointToLatLng(containerPoint);
+        RoutePlanner.onMapClick(latlng.lat, latlng.lng);
         return;
       }
 
@@ -254,5 +262,13 @@ var MapMod = (() => {
     _triggerSelection(e.latlng);
   }
 
-  return { init, getMap, flyTo, locate, startSelect, stopSelect, setTileLayer };
+  function isSelecting() {
+    return _selecting;
+  }
+
+  function triggerSelection(latlng) {
+    _triggerSelection(latlng);
+  }
+
+  return { init, getMap, flyTo, locate, startSelect, stopSelect, setTileLayer, isSelecting, triggerSelection };
 })();

@@ -5,7 +5,7 @@ import rateLimit from 'express-rate-limit';
 import isSea from 'is-sea';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { databaseService } from './src/db/databaseService.js';
+import { databaseService } from './src/db/databaseService.ts';
 
 dotenv.config();
 

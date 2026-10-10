@@ -1,5 +1,5 @@
 import isSea from 'is-sea';
-import { databaseService } from '../src/db/databaseService.js';
+import { databaseService } from '../src/db/databaseService.ts';
 
 export default async function handler(req: any, res: any) {
   res.setHeader('Access-Control-Allow-Origin', '*');

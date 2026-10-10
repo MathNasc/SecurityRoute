@@ -5,8 +5,8 @@
  * Desacoplada de fornecedores específicos.
  */
 
-import { db } from './index.js';
-import { occurrences } from './schema.js';
+import { db } from './index.ts';
+import { occurrences } from './schema.ts';
 import { desc, count } from 'drizzle-orm';
 
 export interface Occurrence {
@@ -39,39 +39,35 @@ const initialSeedData: Occurrence[] = [
 let inMemoryStore: Occurrence[] = [...initialSeedData];
 let nextId = 15;
 
-const isProduction = process.env.NODE_ENV === 'production';
-
 export const databaseService = {
   /**
-   * Obtém todas as ocorrências salvas no PostgreSQL.
+   * Obtém todas as ocorrências salvas no PostgreSQL ou na memória.
    */
   async getAllOccurrences(): Promise<Occurrence[]> {
-    try {
-      const records = await db
-        .select()
-        .from(occurrences)
-        .orderBy(desc(occurrences.createdAt));
+    if (db) {
+      try {
+        const records = await db
+          .select()
+          .from(occurrences)
+          .orderBy(desc(occurrences.createdAt));
 
-      return records.map((r: any) => ({
-        id: r.id,
-        type: r.type,
-        lat: r.lat,
-        lng: r.lng,
-        description: r.description,
-        createdAt: r.createdAt ? new Date(r.createdAt).toISOString() : new Date().toISOString(),
-      }));
-    } catch (error) {
-      if (isProduction) {
-        console.error('[DatabaseService] Production database query failed:', error);
-        throw error;
+        return records.map((r: any) => ({
+          id: r.id,
+          type: r.type,
+          lat: r.lat,
+          lng: r.lng,
+          description: r.description,
+          createdAt: r.createdAt ? new Date(r.createdAt).toISOString() : new Date().toISOString(),
+        }));
+      } catch (error) {
+        console.warn('[DatabaseService] Database query failed — fallback to in-memory occurrences:', error);
       }
-      console.warn('[DatabaseService] Development fallback: returning in-memory occurrences.');
-      return inMemoryStore;
     }
+    return inMemoryStore;
   },
 
   /**
-   * Registra uma nova ocorrência no PostgreSQL.
+   * Registra uma nova ocorrência no PostgreSQL ou na memória.
    */
   async createOccurrence(payload: {
     type: string;
@@ -79,74 +75,70 @@ export const databaseService = {
     lng: number;
     description: string;
   }): Promise<Occurrence> {
-    try {
-      const [inserted] = await db
-        .insert(occurrences)
-        .values({
-          type: payload.type,
-          lat: payload.lat,
-          lng: payload.lng,
-          description: payload.description,
-        })
-        .returning();
+    if (db) {
+      try {
+        const [inserted] = await db
+          .insert(occurrences)
+          .values({
+            type: payload.type,
+            lat: payload.lat,
+            lng: payload.lng,
+            description: payload.description,
+          })
+          .returning();
 
-      return {
-        id: inserted.id,
-        type: inserted.type,
-        lat: inserted.lat,
-        lng: inserted.lng,
-        description: inserted.description,
-        createdAt: inserted.createdAt ? new Date(inserted.createdAt).toISOString() : new Date().toISOString(),
-      };
-    } catch (error) {
-      if (isProduction) {
-        console.error('[DatabaseService] Production database insert failed:', error);
-        throw error;
+        return {
+          id: inserted.id,
+          type: inserted.type,
+          lat: inserted.lat,
+          lng: inserted.lng,
+          description: inserted.description,
+          createdAt: inserted.createdAt ? new Date(inserted.createdAt).toISOString() : new Date().toISOString(),
+        };
+      } catch (error) {
+        console.warn('[DatabaseService] Database insert failed — fallback to in-memory store:', error);
       }
-      console.warn('[DatabaseService] Development fallback: saving occurrence to in-memory store.');
-      const newOcc: Occurrence = {
-        id: nextId++,
-        type: payload.type,
-        lat: payload.lat,
-        lng: payload.lng,
-        description: payload.description,
-        createdAt: new Date().toISOString(),
-      };
-      inMemoryStore.unshift(newOcc);
-      return newOcc;
     }
+    const newOcc: Occurrence = {
+      id: nextId++,
+      type: payload.type,
+      lat: payload.lat,
+      lng: payload.lng,
+      description: payload.description,
+      createdAt: new Date().toISOString(),
+    };
+    inMemoryStore.unshift(newOcc);
+    return newOcc;
   },
 
   /**
    * Popula dados iniciais caso a tabela esteja vazia.
    */
   async seedOccurrences(): Promise<{ message: string }> {
-    try {
-      const [countResult] = await db.select({ value: count() }).from(occurrences);
-      const total = Number(countResult?.value || 0);
+    if (db) {
+      try {
+        const [countResult] = await db.select({ value: count() }).from(occurrences);
+        const total = Number(countResult?.value || 0);
 
-      if (total === 0) {
-        const seedValues = initialSeedData.map(d => ({
-          type: d.type,
-          lat: d.lat,
-          lng: d.lng,
-          description: d.description,
-        }));
-        await db.insert(occurrences).values(seedValues);
-        return { message: 'Seeded successfully' };
+        if (total === 0) {
+          const seedValues = initialSeedData.map(d => ({
+            type: d.type,
+            lat: d.lat,
+            lng: d.lng,
+            description: d.description,
+          }));
+          await db.insert(occurrences).values(seedValues);
+          return { message: 'Seeded successfully' };
+        }
+        return { message: 'Already seeded' };
+      } catch (error) {
+        console.warn('[DatabaseService] Database seed failed — fallback to in-memory store:', error);
       }
-      return { message: 'Already seeded' };
-    } catch (error) {
-      if (isProduction) {
-        console.error('[DatabaseService] Production database seed failed:', error);
-        throw error;
-      }
-      console.warn('[DatabaseService] Development fallback: seeding in-memory store.');
-      if (inMemoryStore.length === 0) {
-        inMemoryStore = [...initialSeedData];
-        return { message: 'Seeded successfully' };
-      }
-      return { message: 'Already seeded' };
     }
+    if (inMemoryStore.length === 0) {
+      inMemoryStore = [...initialSeedData];
+      return { message: 'Seeded successfully' };
+    }
+    return { message: 'Already seeded' };
   },
 };

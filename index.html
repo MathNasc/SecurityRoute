@@ -305,8 +305,30 @@ body{display:flex;flex-direction:column}
 .map-hint-cancel{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:#fff;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:11px;line-height:1;transition:background var(--t)}
 .map-hint-cancel:hover{background:rgba(244,63,94,.4);border-color:#f43f5e}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.7}}
-body.pin-mode,body.pin-mode #map{cursor:crosshair!important}
-body.pin-mode .fab-wrap,body.pin-mode .em-float,body.pin-mode .fb-bar{opacity:.18;pointer-events:none;transition:opacity .2s ease}
+body.pin-mode,body.pin-mode #map,body.picking-route,body.picking-route #map{cursor:crosshair!important}
+body.pin-mode .fab-wrap,body.pin-mode .em-float,body.pin-mode .fb-bar,
+body.picking-route .fab-wrap,body.picking-route .em-float,body.picking-route .fb-bar{opacity:.18;pointer-events:none;transition:opacity .2s ease}
+
+/* Previne que marcadores, popups e rotas interceptem o clique nos modos de marcação */
+body.pin-mode .leaflet-marker-pane,
+body.pin-mode .leaflet-shadow-pane,
+body.pin-mode .leaflet-popup-pane,
+body.pin-mode .leaflet-overlay-pane,
+body.pin-mode .leaflet-overlay-pane svg path,
+body.picking-route .leaflet-marker-pane,
+body.picking-route .leaflet-shadow-pane,
+body.picking-route .leaflet-popup-pane,
+body.picking-route .leaflet-overlay-pane,
+body.picking-route .leaflet-overlay-pane svg path{pointer-events:none!important}
+
+/* Camada de Heatmap nunca deve bloquear toques ou arrasto */
+.leaflet-heatmap-layer,
+canvas.leaflet-heatmap-layer,
+.leaflet-overlay-pane canvas{pointer-events:none!important}
+
+/* Polylines e SVGs não bloqueiam arrasto por touch */
+.leaflet-overlay-pane svg path,
+.leaflet-interactive{touch-action:none!important}
 
 /* FAB */
 .fab-wrap{position:absolute;bottom:80px;right:18px;z-index:300;display:flex;flex-direction:column;align-items:flex-end;gap:9px}
@@ -344,8 +366,8 @@ body.pin-mode .fab-wrap,body.pin-mode .em-float,body.pin-mode .fb-bar{opacity:.1
 /* Sheet */
 .sh-bd{position:fixed;inset:0;background:rgba(7,9,15,.72);backdrop-filter:blur(4px);z-index:800;opacity:0;pointer-events:none;transition:opacity .3s ease}
 .sh-bd.open{opacity:1;pointer-events:all}
-.sheet{position:fixed;bottom:0;left:0;right:0;z-index:900;background:var(--s1);border-top:1px solid var(--bd2);border-radius:24px 24px 0 0;box-shadow:var(--shx);transform:translateY(100%);transition:transform .3s ease;max-height:88vh;overflow-y:auto;padding-bottom:env(safe-area-inset-bottom)}
-.sheet.open{transform:translateY(0)}
+.sheet{position:fixed;bottom:0;left:0;right:0;z-index:900;background:var(--s1);border-top:1px solid var(--bd2);border-radius:24px 24px 0 0;box-shadow:var(--shx);transform:translateY(100%);transition:transform .3s ease,visibility .3s ease;max-height:88vh;overflow-y:auto;padding-bottom:env(safe-area-inset-bottom);pointer-events:none;visibility:hidden}
+.sheet.open{transform:translateY(0);pointer-events:auto;visibility:visible}
 .sheet::-webkit-scrollbar{width:0}
 .sh-handle{width:38px;height:4px;border-radius:var(--rf);background:var(--bd2);margin:12px auto 0}
 .sh-hdr{padding:14px 18px 12px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between}

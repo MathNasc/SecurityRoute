@@ -81,7 +81,12 @@ var RoutePlanner = (() => {
     document.getElementById('rpPickOrigin')?.classList.toggle('active', mode === 'origin');
     document.getElementById('rpPickDest')?.classList.toggle('active',   mode === 'dest');
 
-    if (!mode) { hint?.classList.remove('vis'); return; }
+    if (!mode) {
+      hint?.classList.remove('vis');
+      document.body.classList.remove('picking-route');
+      return;
+    }
+    document.body.classList.add('picking-route');
     if (dot) dot.style.background = mode === 'origin' ? 'var(--green)' : 'var(--sec)';
     if (txt) txt.textContent = mode === 'origin'
       ? 'Clique no mapa para definir a ORIGEM'
@@ -215,19 +220,37 @@ var RoutePlanner = (() => {
     // Unselected routes first (lower z-order)
     routes.forEach((rt, i) => {
       if (i === selectedIdx) return;
-      const glow = L.polyline(rt.coords, _lineStyle(rt, false, true)).addTo(map());
-      const line = L.polyline(rt.coords, _lineStyle(rt, false, false)).addTo(map());
-      line.on('click', () => _selectRoute(i));
-      glow.on('click', () => _selectRoute(i));
+      const glow = L.polyline(rt.coords, { ..._lineStyle(rt, false, true), interactive: false }).addTo(map());
+      const line = L.polyline(rt.coords, { ..._lineStyle(rt, false, false), interactive: true }).addTo(map());
+      line.on('click', (e) => {
+        if (typeof MapMod !== 'undefined' && MapMod.isSelecting && MapMod.isSelecting()) {
+          MapMod.triggerSelection(e.latlng);
+          return;
+        }
+        if (_pickMode) {
+          onMapClick(e.latlng.lat, e.latlng.lng);
+          return;
+        }
+        _selectRoute(i);
+      });
       _routeLayers.push(glow, line);
     });
 
     // Selected route on top
     const sel     = routes[selectedIdx];
-    const selGlow = L.polyline(sel.coords, _lineStyle(sel, true, true)).addTo(map());
-    const selLine = L.polyline(sel.coords, _lineStyle(sel, true, false)).addTo(map());
-    selLine.on('click', () => _selectRoute(selectedIdx));
-    selGlow.on('click', () => _selectRoute(selectedIdx));
+    const selGlow = L.polyline(sel.coords, { ..._lineStyle(sel, true, true), interactive: false }).addTo(map());
+    const selLine = L.polyline(sel.coords, { ..._lineStyle(sel, true, false), interactive: true }).addTo(map());
+    selLine.on('click', (e) => {
+      if (typeof MapMod !== 'undefined' && MapMod.isSelecting && MapMod.isSelecting()) {
+        MapMod.triggerSelection(e.latlng);
+        return;
+      }
+      if (_pickMode) {
+        onMapClick(e.latlng.lat, e.latlng.lng);
+        return;
+      }
+      _selectRoute(selectedIdx);
+    });
     _routeLayers.push(selGlow, selLine);
 
     // Hotspot circles on selected route
@@ -240,6 +263,18 @@ var RoutePlanner = (() => {
           <strong style="color:#ef4444">⚠️ Área de risco</strong><br/>
           ${hs.count} ocorrência${hs.count > 1 ? 's' : ''} próximas
         </div>`);
+      circle.on('click', (e) => {
+        if (typeof MapMod !== 'undefined' && MapMod.isSelecting && MapMod.isSelecting()) {
+          circle.closePopup();
+          MapMod.triggerSelection(e.latlng);
+          return;
+        }
+        if (_pickMode) {
+          circle.closePopup();
+          onMapClick(e.latlng.lat, e.latlng.lng);
+          return;
+        }
+      });
       _routeLayers.push(circle);
     });
   }
@@ -516,5 +551,9 @@ var RoutePlanner = (() => {
     });
   }
 
-  return { init, onMapClick };
+  function isPicking() {
+    return !!_pickMode;
+  }
+
+  return { init, onMapClick, isPicking };
 })();
