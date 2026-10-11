@@ -5,7 +5,7 @@
  * Desacoplada de fornecedores específicos.
  */
 
-import { db } from './index.ts';
+import { db, disableDb } from './index.ts';
 import { occurrences } from './schema.ts';
 import { desc, count } from 'drizzle-orm';
 
@@ -60,7 +60,8 @@ export const databaseService = {
           createdAt: r.createdAt ? new Date(r.createdAt).toISOString() : new Date().toISOString(),
         }));
       } catch (error) {
-        console.warn('[DatabaseService] Database query failed — fallback to in-memory occurrences:', error);
+        disableDb();
+        console.warn('[DatabaseService] Database query failed — fallback to in-memory occurrences.');
       }
     }
     return inMemoryStore;
@@ -96,7 +97,8 @@ export const databaseService = {
           createdAt: inserted.createdAt ? new Date(inserted.createdAt).toISOString() : new Date().toISOString(),
         };
       } catch (error) {
-        console.warn('[DatabaseService] Database insert failed — fallback to in-memory store:', error);
+        disableDb();
+        console.warn('[DatabaseService] Database insert failed — fallback to in-memory store.');
       }
     }
     const newOcc: Occurrence = {
@@ -132,7 +134,8 @@ export const databaseService = {
         }
         return { message: 'Already seeded' };
       } catch (error) {
-        console.warn('[DatabaseService] Database seed failed — fallback to in-memory store:', error);
+        disableDb();
+        console.warn('[DatabaseService] Database seed failed — fallback to in-memory store.');
       }
     }
     if (inMemoryStore.length === 0) {

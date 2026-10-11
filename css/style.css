@@ -361,10 +361,10 @@ body{display:flex;flex-direction:column}
 @keyframes hint-pulse{0%,100%{opacity:1}50%{opacity:.55}}
 
 /* ── FAB ── */
-.fab-wrap{position:absolute;bottom:80px;right:18px;z-index:300;display:flex;flex-direction:column;align-items:flex-end;gap:9px}
-.fab-menu{display:flex;flex-direction:column;gap:8px;align-items:flex-end;pointer-events:none;opacity:0;transform:translateY(8px) scale(.96);transition:all var(--t)}
-.fab-menu.open{pointer-events:all;opacity:1;transform:none}
-.fab-type{display:flex;align-items:center;gap:9px;border:none;cursor:pointer;transition:all var(--ts)}
+.fab-wrap{position:absolute;bottom:80px;right:18px;z-index:300;display:flex;flex-direction:column;align-items:flex-end;gap:9px;pointer-events:none!important}
+.fab-menu{display:none!important;flex-direction:column;gap:8px;align-items:flex-end;pointer-events:none!important;opacity:0;transform:translateY(8px) scale(.96);transition:all var(--t)}
+.fab-menu.open{display:flex!important;pointer-events:auto!important;opacity:1;transform:none}
+.fab-type{display:flex;align-items:center;gap:9px;border:none;cursor:pointer;transition:all var(--ts);pointer-events:auto!important}
 .fab-lbl{background:var(--s2);border:1px solid var(--bd2);color:var(--tx);font-size:11.5px;font-weight:600;padding:6px 11px;border-radius:var(--r-f);box-shadow:var(--sh-sm);letter-spacing:.02em;white-space:nowrap}
 .fab-ico{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;box-shadow:var(--sh);flex-shrink:0;transition:all var(--ts)}
 .fab-type:hover .fab-ico{transform:scale(1.1)}
@@ -557,8 +557,8 @@ body.pin-mode #map,body.pin-mode{cursor:crosshair!important}
   .leaflet-top.leaflet-left{margin-top:80px !important;}
   .safety-map-badge{top:68px}
   .float-filter-bar{bottom:22px}
-  .fab-wrap{bottom:74px;right:14px}
-  .emergency-float{bottom:74px;left:14px}
+  .fab-wrap{bottom:74px;right:14px;pointer-events:none!important}
+  .emergency-float{bottom:74px;left:14px;pointer-events:none!important}
   .toast-wrap{bottom:90px;right:12px}
 }
 

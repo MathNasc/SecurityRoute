@@ -9,17 +9,40 @@ const connectionString = process.env.DATABASE_URL;
 export let pool: Pool | null = null;
 export let db: any = null;
 
-if (connectionString) {
+function isValidDatabaseUrl(url?: string): boolean {
+  if (!url) return false;
   try {
-    pool = new Pool({ connectionString, connectionTimeoutMillis: 3000 });
+    const parsed = new URL(url);
+    // Reject dummy placeholder hosts like 'host', 'example.com' or missing host
+    if (!parsed.hostname || parsed.hostname === 'host' || parsed.hostname === 'example.com') {
+      return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function disableDb() {
+  db = null;
+  if (pool) {
+    try { pool.end().catch(() => {}); } catch {}
+    pool = null;
+  }
+}
+
+if (isValidDatabaseUrl(connectionString)) {
+  try {
+    pool = new Pool({ connectionString, connectionTimeoutMillis: 2000 });
     db = drizzle(pool, { schema });
   } catch (err) {
     console.warn('[AI Studio] Database connection initialization failed — using mock store:', err);
-    pool = null;
-    db = null;
+    disableDb();
   }
 } else {
-  console.warn('[AI Studio] DATABASE_URL not set — using in-memory store');
+  console.log('[AI Studio] No external database configured or placeholder host detected — using in-memory store.');
+  pool = null;
+  db = null;
 }
 
 export * from './databaseService.ts';

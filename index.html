@@ -331,23 +331,23 @@ canvas.leaflet-heatmap-layer,
 .leaflet-interactive{touch-action:none!important}
 
 /* FAB */
-.fab-wrap{position:absolute;bottom:80px;right:18px;z-index:300;display:flex;flex-direction:column;align-items:flex-end;gap:9px}
-.fab-menu{display:flex;flex-direction:column;gap:8px;align-items:flex-end;pointer-events:none;opacity:0;transform:translateY(8px) scale(.96);transition:all var(--t)}
-.fab-menu.open{pointer-events:all;opacity:1;transform:none}
-.fab-row{display:flex;align-items:center;gap:9px;border:none;cursor:pointer;transition:all var(--ts)}
+.fab-wrap{position:absolute;bottom:80px;right:18px;z-index:300;display:flex;flex-direction:column;align-items:flex-end;gap:9px;pointer-events:none!important}
+.fab-menu{display:none!important;flex-direction:column;gap:8px;align-items:flex-end;pointer-events:none!important;opacity:0;transform:translateY(8px) scale(.96);transition:all var(--t)}
+.fab-menu.open{display:flex!important;pointer-events:auto!important;opacity:1;transform:none}
+.fab-row{display:flex;align-items:center;gap:9px;border:none;cursor:pointer;transition:all var(--ts);pointer-events:auto!important}
 .fab-lbl{background:var(--s2);border:1px solid var(--bd2);color:var(--tx);font-size:11.5px;font-weight:600;padding:6px 11px;border-radius:var(--rf);box-shadow:0 1px 4px rgba(0,0,0,.6);letter-spacing:.02em;white-space:nowrap}
 .fab-ico{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;box-shadow:var(--sh);flex-shrink:0;transition:all var(--ts)}
 .fab-ico.sec{background:var(--sec)}.fab-ico.inf{background:var(--inf)}.fab-ico.mob{background:var(--mob)}
 .fab-ico svg{width:19px;height:19px}
 .fab-row:hover .fab-ico{transform:scale(1.1)}
-.fab-main{width:52px;height:52px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(255,107,43,.4);transition:all var(--ts)}
+.fab-main{width:52px;height:52px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(255,107,43,.4);transition:all var(--ts);pointer-events:auto!important}
 .fab-main:hover{transform:scale(1.06);box-shadow:0 6px 28px rgba(255,107,43,.5)}
 .fab-main.open{background:#fff;color:var(--bg);transform:rotate(45deg)}
 .fab-main svg{width:22px;height:22px;transition:all var(--t)}
 
 /* Emergency float */
-.em-float{position:absolute;bottom:80px;left:18px;z-index:300}
-.btn-em-f{display:flex;align-items:center;gap:7px;padding:9px 14px;border-radius:var(--rf);background:var(--s2);border:1px solid rgba(244,63,94,.28);color:#fb7185;font-family:var(--fm);font-size:11.5px;font-weight:500;box-shadow:var(--sh);letter-spacing:.06em;transition:all var(--t)}
+.em-float{position:absolute;bottom:80px;left:18px;z-index:300;pointer-events:none!important}
+.btn-em-f{display:flex;align-items:center;gap:7px;padding:9px 14px;border-radius:var(--rf);background:var(--s2);border:1px solid rgba(244,63,94,.28);color:#fb7185;font-family:var(--fm);font-size:11.5px;font-weight:500;box-shadow:var(--sh);letter-spacing:.06em;transition:all var(--t);pointer-events:auto!important}
 .btn-em-f:hover{background:var(--sec-dim);border-color:var(--sec);box-shadow:0 0 16px rgba(244,63,94,.3)}
 .em-dot{width:7px;height:7px;border-radius:50%;background:var(--sec);animation:blink 1.2s ease infinite;box-shadow:0 0 5px rgba(244,63,94,.8)}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
@@ -600,11 +600,11 @@ canvas.leaflet-heatmap-layer,
   .fb-pill{min-height:38px;padding:8px 14px;font-size:11.5px;letter-spacing:.04em}
 
   /* FAB and emergency com Safe Area inferior */
-  .fab-wrap{bottom:calc(74px + env(safe-area-inset-bottom,0px));right:14px}
-  .fab-main{width:56px;height:56px;box-shadow:0 6px 26px rgba(255,107,43,.45)}
+  .fab-wrap{bottom:calc(74px + env(safe-area-inset-bottom,0px));right:14px;pointer-events:none!important}
+  .fab-main{width:56px;height:56px;box-shadow:0 6px 26px rgba(255,107,43,.45);pointer-events:auto!important}
   .fab-row{min-height:44px}
-  .em-float{bottom:calc(74px + env(safe-area-inset-bottom,0px));left:14px}
-  .btn-em-f{min-height:44px;padding:10px 14px;font-size:11.5px;background:rgba(19,23,34,.9);backdrop-filter:blur(8px)}
+  .em-float{bottom:calc(74px + env(safe-area-inset-bottom,0px));left:14px;pointer-events:none!important}
+  .btn-em-f{min-height:44px;padding:10px 14px;font-size:11.5px;background:rgba(19,23,34,.9);backdrop-filter:blur(8px);pointer-events:auto!important}
 
   /* Desobstrução dinâmica do mapa ao arrastar (Google Maps style) */
   body.map-panning .map-ctrls,
