@@ -132,20 +132,17 @@
     Toast.info('Marcadores removidos', '', 2000);
   });
   
-  let _currentStyleIdx = 0;
-  const _mapStyles = ['carto', 'mapbox', 'osm'];
-  const _mapStyleNames = ['Carto Dark', 'Mapbox Dark', 'OSM Light'];
-  
-  const savedStyle = localStorage.getItem('sr_map_style') || 'carto';
-  _currentStyleIdx = _mapStyles.indexOf(savedStyle);
-  if (_currentStyleIdx === -1) _currentStyleIdx = 0;
-
-  document.getElementById('layerBtn')?.addEventListener('click', () => {
+  /* ── Gerenciamento de Estilo do Mapa (Aba Ajustes) ── */
+  document.getElementById('themeCartoBtn')?.addEventListener('click', () => {
     if (navigator.vibrate) navigator.vibrate(20);
-    _currentStyleIdx = (_currentStyleIdx + 1) % _mapStyles.length;
-    const newStyle = _mapStyles[_currentStyleIdx];
-    MapMod.setTileLayer(newStyle);
-    Toast.info(`Estilo de mapa: ${_mapStyleNames[_currentStyleIdx]}`, '', 2000);
+    MapMod.setTileLayer('carto');
+    Toast.info('Estilo de mapa: Modo Escuro (Carto)', '', 2000);
+  });
+
+  document.getElementById('themeOsmBtn')?.addEventListener('click', () => {
+    if (navigator.vibrate) navigator.vibrate(20);
+    MapMod.setTileLayer('osm');
+    Toast.info('Estilo de mapa: Modo Claro (OpenStreetMap)', '', 2000);
   });
 
   /* ── Emergency ── */

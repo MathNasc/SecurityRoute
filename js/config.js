@@ -9,11 +9,9 @@ window.SR_API_URL = '/api';
 var cartoKey = window.ENV?.CARTO_API_KEY;
 var tileUrl = cartoKey 
   ? `https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?api_key=${cartoKey}`
-  : `https://tile.openstreetmap.org/{z}/{x}/{y}.png`;
+  : `https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png`;
 
-var tileAttr = cartoKey
-  ? '© <a href="https://carto.com/">CARTO</a> | © <a href="https://openstreetmap.org/copyright">OSM</a>'
-  : '© <a href="https://openstreetmap.org/copyright">OSM</a>';
+var tileAttr = '© <a href="https://carto.com/">CARTO</a> | © <a href="https://openstreetmap.org/copyright">OSM</a>';
 
 var CFG = {
   center:  [-23.5505, -46.6333],

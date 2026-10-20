@@ -12,8 +12,8 @@
    └─────────────────────────────────────────────────┘
    ════════════════════════════════════════════════════ */
 
-const CACHE_VERSION  = 'sr-v15';
-const TILE_CACHE     = 'sr-tiles-v15';
+const CACHE_VERSION  = 'sr-v18';
+const TILE_CACHE     = 'sr-tiles-v18';
 const MAX_TILE_CACHE = 500;
 
 /* ── App shell — recursos que funcionam offline ── */
@@ -75,7 +75,7 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     (async () => {
       const keys = await caches.keys();
-      const oldKeys = keys.filter(k => k !== CACHE_VERSION && k !== TILE_CACHE);
+      const oldKeys = keys.filter(k => k !== CACHE_VERSION);
       await Promise.all(
         oldKeys.map(k => {
           console.log(`[SW] Deleting old cache: ${k}`);
@@ -83,16 +83,6 @@ self.addEventListener('activate', (event) => {
         })
       );
       await self.clients.claim();
-      if (oldKeys.length > 0) {
-        const windowClients = await self.clients.matchAll({ type: 'window' });
-        for (const client of windowClients) {
-          try {
-            await client.navigate(client.url);
-          } catch (e) {
-            console.warn('[SW] Could not navigate client:', e);
-          }
-        }
-      }
     })()
   );
 });
@@ -107,13 +97,12 @@ self.addEventListener('fetch', (event) => {
   // Skip non-GET
   if (request.method !== 'GET') return;
 
-  // ── Map tiles ──────────────────────────────────────
+  // ── Map tiles: deixa o navegador carregar direto sem interceptar no SW ──
   if (_isTile(url)) {
-    event.respondWith(_tileStrategy(request));
     return;
   }
 
-  // ── API calls (occurrences backend) ───────────────
+  // ── API calls (occurrences backend & env.js) ──────
   if (_isAPI(url)) {
     event.respondWith(_networkFirst(request, CACHE_VERSION));
     return;

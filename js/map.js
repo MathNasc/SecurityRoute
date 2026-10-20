@@ -43,7 +43,11 @@ var MapMod = (() => {
     // Controlador de toque de alta precisão para mobile
     _setupTouchListeners();
     
-    const savedStyle = localStorage.getItem('sr_map_style') || 'carto';
+    // Limpa chave antiga que salvava 'osm' quando CARTO_API_KEY estava vazia
+    if (localStorage.getItem('sr_map_style')) {
+      localStorage.removeItem('sr_map_style');
+    }
+    const savedStyle = localStorage.getItem('sr_map_theme_v2') || 'carto';
     setTileLayer(savedStyle);
 
     // Botão de cancelar no aviso do mapa
@@ -154,40 +158,79 @@ var MapMod = (() => {
   function setTileLayer(type) {
     if (_currentLayer) _map.removeLayer(_currentLayer);
     
-    var cartoKey = window.ENV?.CARTO_API_KEY;
-    var mapboxToken = window.ENV?.MAPBOX_TOKEN;
-    let url, attr;
+    var cartoKey = (window.ENV?.CARTO_API_KEY || '').trim();
+    var mapboxToken = (window.ENV?.MAPBOX_TOKEN || '').trim();
+    let url, attr, subdomains = 'abcd';
+
+    // Se mapbox foi salvo no localStorage mas não há token, volta para carto
+    if (type === 'mapbox' && !mapboxToken) {
+      type = 'carto';
+    }
     
     if (type === 'carto') {
       url = cartoKey 
-        ? `https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?api_key=${cartoKey}`
-        : `https://tile.openstreetmap.org/{z}/{x}/{y}.png`;
-      attr = cartoKey
-        ? '© <a href="https://carto.com/">CARTO</a> | © <a href="https://openstreetmap.org/copyright">OSM</a>'
-        : '© <a href="https://openstreetmap.org/copyright">OSM</a>';
-      if (!cartoKey) {
-        document.body.classList.add('map-osm');
-      } else {
-        document.body.classList.remove('map-osm');
-      }
-    } else if (type === 'mapbox') {
-      url = `https://api.mapbox.com/styles/v1/mapbox/dark-v11/tiles/256/{z}/{x}/{y}@2x?access_token=${mapboxToken}`;
+        ? `https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?api_key=${encodeURIComponent(cartoKey)}`
+        : `https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png`;
+      attr = '© <a href="https://carto.com/">CARTO</a> | © <a href="https://openstreetmap.org/copyright">OSM</a>';
+      subdomains = 'abcd';
+      document.body.classList.remove('map-osm');
+    } else if (type === 'mapbox' && mapboxToken) {
+      url = `https://api.mapbox.com/styles/v1/mapbox/dark-v11/tiles/256/{z}/{x}/{y}@2x?access_token=${encodeURIComponent(mapboxToken)}`;
       attr = '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> © <a href="http://www.openstreetmap.org/copyright">OSM</a>';
+      subdomains = 'abcd';
       document.body.classList.remove('map-osm');
     } else {
+      type = 'osm';
       url = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
       attr = '© <a href="https://openstreetmap.org/copyright">OSM</a>';
-      document.body.classList.add('map-osm');
+      subdomains = 'abc';
+      document.body.classList.remove('map-osm');
     }
     
     _currentLayer = L.tileLayer(url, {
-      attribution: attr, subdomains: 'abcd', maxZoom: CFG.maxZoom,
+      attribution: attr,
+      subdomains: subdomains,
+      maxZoom: CFG.maxZoom,
       updateWhenIdle: false, // Atualiza tiles durante drag para fluidez
       updateWhenZooming: true,
       keepBuffer: 6,
     }).addTo(_map);
+
+    // Fallback automático caso a chave ou o domínio do Carto falhe na rede do usuário
+    if (type === 'carto') {
+      let triedKeylessCarto = !cartoKey;
+      let fellBackToDarkOsm = false;
+      _currentLayer.on('tileerror', () => {
+        if (!triedKeylessCarto) {
+          triedKeylessCarto = true;
+          _currentLayer.setUrl('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png');
+        } else if (!fellBackToDarkOsm) {
+          fellBackToDarkOsm = true;
+          document.body.classList.add('map-osm');
+          _currentLayer.setUrl('https://tile.openstreetmap.org/{z}/{x}/{y}.png');
+        }
+      });
+    }
     
-    localStorage.setItem('sr_map_style', type);
+    localStorage.setItem('sr_map_theme_v2', type);
+
+    // Atualiza destaque e badge "Ativo" dos botões na aba Ajustes
+    const cartoBtn = document.getElementById('themeCartoBtn');
+    const osmBtn = document.getElementById('themeOsmBtn');
+    if (cartoBtn) {
+      const isCarto = type === 'carto';
+      cartoBtn.style.borderColor = isCarto ? 'var(--accent)' : 'var(--bd)';
+      cartoBtn.style.background = isCarto ? 'var(--s3)' : 'var(--s2)';
+      const badge = cartoBtn.querySelector('.theme-active-badge');
+      if (badge) badge.style.display = isCarto ? 'inline-block' : 'none';
+    }
+    if (osmBtn) {
+      const isOsm = type === 'osm';
+      osmBtn.style.borderColor = isOsm ? 'var(--accent)' : 'var(--bd)';
+      osmBtn.style.background = isOsm ? 'var(--s3)' : 'var(--s2)';
+      const badge = osmBtn.querySelector('.theme-active-badge');
+      if (badge) badge.style.display = isOsm ? 'inline-block' : 'none';
+    }
   }
 
   function getMap() { return _map; }

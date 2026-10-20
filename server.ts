@@ -32,6 +32,15 @@ const createLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+app.get('/api/env.js', (req, res) => {
+  res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+  const envData = {
+    CARTO_API_KEY: process.env.CARTO_API_KEY || process.env.VITE_CARTO_API_KEY || '',
+    MAPBOX_TOKEN: process.env.MAPBOX_TOKEN || process.env.VITE_MAPBOX_TOKEN || '',
+  };
+  res.send(`window.ENV = Object.assign(window.ENV || {}, ${JSON.stringify(envData)});`);
+});
+
 app.get('/api/occurrences', async (req, res) => {
   try {
     const occurrences = await databaseService.getAllOccurrences();
