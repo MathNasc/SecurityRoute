@@ -143,10 +143,9 @@ var Sheet = (() => {
         if (navigator.vibrate) navigator.vibrate(30);
         _type = btn.dataset.type;
         const t = TYPES[_type];
-        // Atualiza label no step de pin
         const lbl = $('pinTypeLabel');
         if (lbl) { lbl.textContent = t.label; lbl.style.color = t.color; }
-        _show('pin');
+        _enterPinMode();
       });
     });
 
@@ -193,17 +192,17 @@ var Sheet = (() => {
     _buildGroups();
 
     if (type) {
-      // Atalho rápido do FAB: pula seleção, vai direto ao pin
+      // Atalho rápido do FAB: vai direto ao modo de marcação no mapa sem bloquear a tela
       _type = type;
       const t = TYPES[type];
       const lbl = $('pinTypeLabel');
-      if (lbl) { lbl.textContent = t.label; lbl.style.color = t.color; }
-      _show('pin');
-    } else {
-      // Seleção completa: grupos
-      _show('groups');
+      if (lbl && t) { lbl.textContent = t.label; lbl.style.color = t.color; }
+      _enterPinMode();
+      return;
     }
 
+    // Seleção completa: grupos
+    _show('groups');
     _openSheet();
   }
 

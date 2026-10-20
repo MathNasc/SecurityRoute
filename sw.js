@@ -12,8 +12,8 @@
    └─────────────────────────────────────────────────┘
    ════════════════════════════════════════════════════ */
 
-const CACHE_VERSION  = 'sr-v11';
-const TILE_CACHE     = 'sr-tiles-v11';
+const CACHE_VERSION  = 'sr-v15';
+const TILE_CACHE     = 'sr-tiles-v15';
 const MAX_TILE_CACHE = 500;
 
 /* ── App shell — recursos que funcionam offline ── */
@@ -53,12 +53,12 @@ const CDN_RESOURCES = [
    INSTALL — pre-cache app shell
    ════════════════════════════════════════════════════ */
 self.addEventListener('install', (event) => {
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_VERSION).then(async (cache) => {
-      // Cache app shell (best-effort — don't fail if one resource is missing)
       await Promise.allSettled(
         [...APP_SHELL, ...CDN_RESOURCES].map(url =>
-          cache.add(url).catch(err =>
+          cache.add(new Request(url, { cache: 'reload' })).catch(err =>
             console.warn(`[SW] Failed to cache: ${url}`, err)
           )
         )
@@ -66,25 +66,34 @@ self.addEventListener('install', (event) => {
       console.log('[SW] App shell cached');
     })
   );
-  // Activate immediately without waiting for old SW to finish
-  self.skipWaiting();
 });
 
 /* ════════════════════════════════════════════════════
-   ACTIVATE — clean up old caches
+   ACTIVATE — clean up old caches & refresh clients
    ════════════════════════════════════════════════════ */
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(
-        keys
-          .filter(k => k !== CACHE_VERSION && k !== TILE_CACHE)
-          .map(k => {
-            console.log(`[SW] Deleting old cache: ${k}`);
-            return caches.delete(k);
-          })
-      )
-    ).then(() => self.clients.claim())
+    (async () => {
+      const keys = await caches.keys();
+      const oldKeys = keys.filter(k => k !== CACHE_VERSION && k !== TILE_CACHE);
+      await Promise.all(
+        oldKeys.map(k => {
+          console.log(`[SW] Deleting old cache: ${k}`);
+          return caches.delete(k);
+        })
+      );
+      await self.clients.claim();
+      if (oldKeys.length > 0) {
+        const windowClients = await self.clients.matchAll({ type: 'window' });
+        for (const client of windowClients) {
+          try {
+            await client.navigate(client.url);
+          } catch (e) {
+            console.warn('[SW] Could not navigate client:', e);
+          }
+        }
+      }
+    })()
   );
 });
 
@@ -116,7 +125,13 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // ── App shell + CDN ───────────────────────────────
+  // ── Local App Shell (HTML, JS, CSS) → Network First ──
+  if (url.origin === self.location.origin) {
+    event.respondWith(_networkFirst(request, CACHE_VERSION));
+    return;
+  }
+
+  // ── External CDN → Cache First ────────────────────
   event.respondWith(_cacheFirst(request));
 });
 

@@ -17,7 +17,9 @@ var MapMod = (() => {
       dragging: true,
       touchZoom: true,
       bounceAtZoomLimits: false,
-      inertia: false,           // Substituído pelo nosso controlador de momento nativo para mobile
+      inertia: true,
+      inertiaDeceleration: 3000,
+      inertiaMaxSpeed: 1800,
       zoomAnimation: true,
       fadeAnimation: true,
       markerZoomAnimation: true,
@@ -26,6 +28,11 @@ var MapMod = (() => {
     
     L.control.zoom({ position: 'topleft' }).addTo(_map);
     
+    // Garante que o Leaflet reconheça 100% da área do container inclusive canto inferior direito
+    setTimeout(() => _map.invalidateSize(), 100);
+    setTimeout(() => _map.invalidateSize(), 600);
+    window.addEventListener('resize', () => _map.invalidateSize());
+
     // Suaviza a visão do mapa durante o arrasto no mobile (Google Maps style)
     _map.on('movestart', () => document.body.classList.add('map-panning'));
     _map.on('moveend', () => document.body.classList.remove('map-panning'));
@@ -33,7 +40,7 @@ var MapMod = (() => {
     // Eventos de clique para mouse/desktop
     _map.on('click', _onClick);
 
-    // Controlador de física de inércia e toque de alta precisão para mobile
+    // Controlador de toque de alta precisão para mobile
     _setupTouchListeners();
     
     const savedStyle = localStorage.getItem('sr_map_style') || 'carto';
@@ -214,6 +221,8 @@ var MapMod = (() => {
 
   function startSelect(cb) {
     _selecting = true; _onSelect = cb;
+    document.getElementById('fabMenu')?.classList.remove('open');
+    document.getElementById('fabMain')?.classList.remove('open');
     document.body.classList.add('pin-mode');
     document.getElementById('mapHint')?.classList.add('visible');
   }

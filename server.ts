@@ -17,6 +17,13 @@ app.use(cors());
 app.use(express.json());
 app.set('trust proxy', 1);
 
+app.use((req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  next();
+});
+
 const createLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 30,
