@@ -12,6 +12,9 @@
     Markers.init(map);
     Heatmap.init(map);
     SafetyScore.init(map);
+    if (typeof PublicSecurityClient !== 'undefined') {
+      PublicSecurityClient.init(map);
+    }
 
     /* 2. Route planner — init BEFORE wiring map clicks */
     RoutePlanner.init();
@@ -40,13 +43,16 @@
       }
     });
 
-    /* 4. Load incidents */
+    /* 4. Load incidents + initial Public Security heatmap/hotspots */
     let allOccs = [];
     try {
       allOccs = await API.getOccurrences();
       Markers.addMany(allOccs);
       Stats.update();
       Analytics.render(allOccs);
+      if (typeof PublicSecurityClient !== 'undefined') {
+        PublicSecurityClient.syncViewport(map).catch(() => {});
+      }
       if (allOccs.length) Toast.success(`${allOccs.length} ocorrências carregadas`, '', 2500);
     } catch {
       Toast.error('Erro ao carregar ocorrências', 'Modo demo ativado.', 4000);
@@ -60,6 +66,9 @@
       const btn = document.getElementById('realtimeRefreshBtn');
       btn?.classList.add('spinning');
       await Realtime.refresh();
+      if (typeof PublicSecurityClient !== 'undefined') {
+        await PublicSecurityClient.syncViewport(map).catch(() => {});
+      }
       Analytics.render(Markers.getAll());
       setTimeout(() => btn?.classList.remove('spinning'), 600);
     });
@@ -132,7 +141,7 @@
     Toast.info('Marcadores removidos', '', 2000);
   });
   
-  /* ── Gerenciamento de Estilo do Mapa (Aba Ajustes) ── */
+  /* ── Gerenciamento de Estilo do Mapa e Public Security API (Aba Ajustes) ── */
   document.getElementById('themeCartoBtn')?.addEventListener('click', () => {
     if (navigator.vibrate) navigator.vibrate(20);
     MapMod.setTileLayer('carto');
@@ -143,6 +152,28 @@
     if (navigator.vibrate) navigator.vibrate(20);
     MapMod.setTileLayer('osm');
     Toast.info('Estilo de mapa: Modo Claro (OpenStreetMap)', '', 2000);
+  });
+
+  document.getElementById('toggleHotspotsBtn')?.addEventListener('click', () => {
+    if (typeof PublicSecurityClient === 'undefined') return;
+    const active = PublicSecurityClient.toggleHotspots();
+    const btn = document.getElementById('toggleHotspotsBtn');
+    if (btn) {
+      btn.textContent = active ? 'Hotspots: Visíveis' : 'Hotspots: Ocultos';
+      btn.style.borderColor = active ? 'var(--accent)' : 'var(--bd)';
+    }
+    Toast.info(active ? 'Zonas críticas (Hotspots) ativadas' : 'Zonas críticas (Hotspots) ocultadas', '', 1800);
+  });
+
+  document.getElementById('psSyncNowBtn')?.addEventListener('click', async () => {
+    if (typeof PublicSecurityClient === 'undefined') return;
+    Toast.info('Sincronizando com Public Security API…', '', 1500);
+    try {
+      const added = await PublicSecurityClient.syncViewport(MapMod.getMap());
+      Toast.success('Sincronização concluída', `${added.length} nova(s) ocorrência(s) na área visível.`, 2500);
+    } catch (e) {
+      Toast.error('Falha ao sincronizar com Public Security API', e.message || '');
+    }
   });
 
   /* ── Emergency ── */

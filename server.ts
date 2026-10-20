@@ -32,13 +32,94 @@ const createLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+const PUBLIC_SECURITY_API_URL = (
+  process.env.VITE_PUBLIC_SECURITY_API_URL ||
+  process.env.PUBLIC_SECURITY_API_URL ||
+  'https://ais-pre-i62a2zwoizbmsr6t53awod-238922234262.us-east5.run.app/api/public/v1'
+).replace(/\/+$/, '');
+
+const PUBLIC_SECURITY_API_KEY =
+  process.env.VITE_PUBLIC_SECURITY_API_KEY ||
+  process.env.PUBLIC_SECURITY_API_KEY ||
+  'test_api_key_123';
+
+function getPublicSecurityHeaders() {
+  return {
+    'Content-Type': 'application/json',
+    'X-API-Key': PUBLIC_SECURITY_API_KEY,
+    Authorization: `Bearer ${PUBLIC_SECURITY_API_KEY}`,
+  };
+}
+
 app.get('/api/env.js', (req, res) => {
   res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
   const envData = {
     CARTO_API_KEY: process.env.CARTO_API_KEY || process.env.VITE_CARTO_API_KEY || '',
     MAPBOX_TOKEN: process.env.MAPBOX_TOKEN || process.env.VITE_MAPBOX_TOKEN || '',
+    VITE_PUBLIC_SECURITY_API_URL: PUBLIC_SECURITY_API_URL,
+    VITE_PUBLIC_SECURITY_API_KEY: PUBLIC_SECURITY_API_KEY,
   };
   res.send(`window.ENV = Object.assign(window.ENV || {}, ${JSON.stringify(envData)});`);
+});
+
+/* ── Proxy Endpoints for Public Security API (avoids Mixed Content / CORS issues with VPS or Cloud Run) ── */
+app.get('/api/public-security/occurrences', async (req, res) => {
+  try {
+    const params = new URLSearchParams();
+    for (const [k, v] of Object.entries(req.query || {})) {
+      if (v !== undefined && v !== null) params.set(k, String(v));
+    }
+    const qs = params.toString();
+    const url = `${PUBLIC_SECURITY_API_URL}/occurrences${qs ? `?${qs}` : ''}`;
+    const upstream = await fetch(url, { headers: getPublicSecurityHeaders() });
+    if (!upstream.ok) {
+      return res.status(upstream.status).json({ error: `Upstream HTTP ${upstream.status}` });
+    }
+    const data = await upstream.json();
+    res.json(data);
+  } catch (error) {
+    console.warn('[PublicSecurity Proxy] GET /occurrences failed:', error?.message || error);
+    res.status(502).json({ error: 'Public Security API unreachable', details: error?.message });
+  }
+});
+
+app.get('/api/public-security/occurrences/heatmap', async (req, res) => {
+  try {
+    const params = new URLSearchParams();
+    for (const [k, v] of Object.entries(req.query || {})) {
+      if (v !== undefined && v !== null) params.set(k, String(v));
+    }
+    const qs = params.toString();
+    const url = `${PUBLIC_SECURITY_API_URL}/occurrences/heatmap${qs ? `?${qs}` : ''}`;
+    const upstream = await fetch(url, { headers: getPublicSecurityHeaders() });
+    if (!upstream.ok) {
+      return res.status(upstream.status).json({ error: `Upstream HTTP ${upstream.status}` });
+    }
+    const data = await upstream.json();
+    res.json(data);
+  } catch (error) {
+    console.warn('[PublicSecurity Proxy] GET /occurrences/heatmap failed:', error?.message || error);
+    res.status(502).json({ error: 'Public Security API heatmap unreachable', details: error?.message });
+  }
+});
+
+app.post('/api/public-security/route/safety', async (req, res) => {
+  try {
+    const url = `${PUBLIC_SECURITY_API_URL}/route/safety`;
+    const upstream = await fetch(url, {
+      method: 'POST',
+      headers: getPublicSecurityHeaders(),
+      body: JSON.stringify(req.body),
+    });
+    if (!upstream.ok) {
+      return res.status(upstream.status).json({ error: `Upstream HTTP ${upstream.status}` });
+    }
+    const data = await upstream.json();
+    res.json(data);
+  } catch (error) {
+    console.warn('[PublicSecurity Proxy] POST /route/safety failed:', error?.message || error);
+    res.status(502).json({ error: 'Public Security API route/safety unreachable', details: error?.message });
+  }
 });
 
 app.get('/api/occurrences', async (req, res) => {

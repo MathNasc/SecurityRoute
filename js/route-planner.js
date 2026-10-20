@@ -253,15 +253,39 @@ var RoutePlanner = (() => {
     });
     _routeLayers.push(selGlow, selLine);
 
+    // Critical segments from Public Security API (POST /route/safety) on selected route
+    if (Array.isArray(sel.criticalSegments) && sel.criticalSegments.length) {
+      sel.criticalSegments.forEach(seg => {
+        if (!seg.from || !seg.to) return;
+        const segColor = seg.riskLevel === 'critical' ? '#ef4444' : seg.riskLevel === 'high' ? '#f97316' : '#eab308';
+        const segLine = L.polyline(
+          [[seg.from.lat, seg.from.lon], [seg.to.lat, seg.to.lon]],
+          {
+            color: segColor,
+            weight: 7,
+            opacity: 0.92,
+            dashArray: '10 6',
+            lineCap: 'round',
+          }
+        ).addTo(map()).bindPopup(`
+          <div style="padding:8px 10px;font-size:12px;min-width:170px">
+            <strong style="color:${segColor}">⚠️ Trecho Crítico (${seg.riskScore}/100)</strong><br/>
+            <span>Predominância: <strong>${_esc(seg.dominantCategoryLabel || seg.dominantCategory || 'Roubo')}</strong></span><br/>
+            <span>${seg.occurrencesCount} ocorrências em ${Math.round(seg.lengthMeters || 0)}m</span>
+          </div>`);
+        _routeLayers.push(segLine);
+      });
+    }
+
     // Hotspot circles on selected route
     sel.hotspots.forEach(hs => {
       const circle = L.circleMarker([hs.lat, hs.lng], {
         radius: 8, color: '#131722', weight: 2,
         fillColor: '#f43f5e', fillOpacity: 0.9,
       }).addTo(map()).bindPopup(`
-        <div style="padding:8px 10px;font-size:12px;min-width:140px">
-          <strong style="color:#ef4444">⚠️ Área de risco</strong><br/>
-          ${hs.count} ocorrência${hs.count > 1 ? 's' : ''} próximas
+        <div style="padding:8px 10px;font-size:12px;min-width:150px">
+          <strong style="color:#ef4444">⚠️ ${hs.label ? _esc(hs.label) : 'Área de risco'}</strong><br/>
+          ${hs.count} ocorrência${hs.count > 1 ? 's' : ''} próximas${hs.distanceMeters !== undefined ? ` (${Math.round(hs.distanceMeters)}m da rota)` : ''}
         </div>`);
       circle.on('click', (e) => {
         if (typeof MapMod !== 'undefined' && MapMod.isSelecting && MapMod.isSelecting()) {
@@ -287,6 +311,19 @@ var RoutePlanner = (() => {
       .forEach((el, i) => el.classList.toggle('on', i === idx));
   }
 
+  function _mapApiRiskLevel(riskLevel, riskScore) {
+    if (riskLevel === 'critical' || riskScore > 75) {
+      return { safetyLevel: 'Crítico', safetyColor: 'var(--risk-critical)', safetyColorHex: '#ef4444' };
+    }
+    if (riskLevel === 'high' || riskScore > 50) {
+      return { safetyLevel: 'Alto', safetyColor: 'var(--risk-high)', safetyColorHex: '#f97316' };
+    }
+    if (riskLevel === 'moderate' || riskScore > 25) {
+      return { safetyLevel: 'Médio', safetyColor: 'var(--risk-moderate)', safetyColorHex: '#eab308' };
+    }
+    return { safetyLevel: 'Baixo', safetyColor: 'var(--risk-low)', safetyColorHex: '#22c55e' };
+  }
+
   // ── Main calculation ───────────────────────────────
   async function _calculate() {
     const btn     = document.getElementById('rpCalcBtn');
@@ -294,7 +331,7 @@ var RoutePlanner = (() => {
 
     btn.disabled = true;
     results.innerHTML = `<div class="rp-loading">
-      <div class="rp-spinner"></div>Buscando rotas e calculando risco…
+      <div class="rp-spinner"></div>Consultando Public Security API e analisando corredor de rota…
     </div>`;
     _clearRoutes();
 
@@ -314,7 +351,86 @@ var RoutePlanner = (() => {
 
       const incidents = (typeof Markers !== 'undefined' ? Markers : MK).getAll();
       const now = new Date();
-      const scored = routes.map(rt => ({ ...rt, ...RiskEngine.score(rt.coords, incidents, now) }));
+
+      // Avalia cada rota no motor local + endpoint POST /route/safety da Public Security API
+      const scored = await Promise.all(routes.map(async (rt) => {
+        const localEval = RiskEngine.score(rt.coords, incidents, now);
+
+        if (typeof PublicSecurityClient !== 'undefined') {
+          try {
+            const apiSafety = await PublicSecurityClient.analyzeRouteSafety(rt.coords, { bufferMeters: 300 });
+            if (apiSafety && apiSafety.routeSummary) {
+              const summary = apiSafety.routeSummary;
+              const apiRiskScore = Math.max(0, Math.min(100, Math.round(100 - Number(summary.safetyScore ?? 100))));
+              const finalRiskScore = summary.totalOccurrencesInCorridor > 0
+                ? apiRiskScore
+                : Math.max(apiRiskScore, localEval.riskScore);
+
+              const levelMeta = _mapApiRiskLevel(
+                summary.totalOccurrencesInCorridor > 0 ? summary.riskLevel : null,
+                finalRiskScore
+              );
+
+              // Converte trechos críticos e ocorrências do corredor em hotspots visuais
+              const apiHotspots = [];
+              if (Array.isArray(apiSafety.criticalSegments)) {
+                apiSafety.criticalSegments.forEach(seg => {
+                  if (seg.from && seg.to) {
+                    apiHotspots.push({
+                      lat: (seg.from.lat + seg.to.lat) / 2,
+                      lng: (seg.from.lon + seg.to.lon) / 2,
+                      score: seg.riskScore || 50,
+                      count: seg.occurrencesCount || 1,
+                      label: seg.dominantCategoryLabel || 'Trecho crítico',
+                    });
+                  }
+                });
+              }
+
+              // Adiciona ocorrências do corredor no mapa caso ainda não estejam visíveis
+              if (Array.isArray(apiSafety.occurrences) && apiSafety.occurrences.length > 0) {
+                const existingIds = new Set(Markers.getAll().map(o => String(o.id)));
+                const freshCorridorOccs = apiSafety.occurrences.filter(o => o && !existingIds.has(String(o.id)));
+                if (freshCorridorOccs.length > 0) {
+                  Markers.addMany(freshCorridorOccs);
+                  if (typeof Stats !== 'undefined') Stats.update();
+                }
+              }
+
+              return {
+                ...rt,
+                ...localEval,
+                riskScore: finalRiskScore,
+                safetyScore: summary.safetyScore ?? (100 - finalRiskScore),
+                safetyLevel: levelMeta.safetyLevel,
+                safetyColor: levelMeta.safetyColor,
+                safetyColorHex: levelMeta.safetyColorHex,
+                totalOccurrencesInCorridor: summary.totalOccurrencesInCorridor ?? 0,
+                bufferMeters: summary.bufferMeters ?? 300,
+                categoryBreakdown: summary.categoryBreakdown || {},
+                criticalSegments: apiSafety.criticalSegments || [],
+                corridorOccurrences: apiSafety.occurrences || [],
+                hotspots: apiHotspots.length ? apiHotspots : localEval.hotspots,
+                fromPublicSecurityApi: true,
+              };
+            }
+          } catch (apiErr) {
+            console.warn('[RoutePlanner] Fallback para motor local:', apiErr.message);
+          }
+        }
+
+        return {
+          ...rt,
+          ...localEval,
+          safetyScore: 100 - localEval.riskScore,
+          totalOccurrencesInCorridor: localEval.hotspots.reduce((acc, h) => acc + h.count, 0),
+          bufferMeters: 300,
+          categoryBreakdown: {},
+          criticalSegments: [],
+          corridorOccurrences: [],
+          fromPublicSecurityApi: false,
+        };
+      }));
 
       const fastestIdx = scored.reduce((b, r, i) => r.durationMin < scored[b].durationMin ? i : b, 0);
       const safestIdx  = scored.reduce((b, r, i) => r.riskScore  < scored[b].riskScore  ? i : b, 0);
@@ -333,8 +449,8 @@ var RoutePlanner = (() => {
       }
 
       Toast.success(
-        `${scored.length} rota${scored.length > 1 ? 's' : ''} calculada${scored.length > 1 ? 's' : ''}`,
-        `Mais segura: ${scored[0].safetyLevel} (${scored[0].riskScore}/100)`
+        `${scored.length} rota${scored.length > 1 ? 's' : ''} analisada${scored.length > 1 ? 's' : ''}`,
+        `Mais segura: Risco ${scored[0].safetyLevel} (Segurança ${scored[0].safetyScore ?? (100 - scored[0].riskScore)}/100)`
       );
 
     } catch (err) {
@@ -365,6 +481,21 @@ var RoutePlanner = (() => {
         ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`
         : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`;
 
+      const breakdownEntries = Object.entries(rt.categoryBreakdown || {}).filter(([, c]) => c > 0);
+      const breakdownHtml = breakdownEntries.length
+        ? `<div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px">
+            ${breakdownEntries.map(([cat, count]) => {
+              const tKey = typeof PublicSecurityClient !== 'undefined' ? PublicSecurityClient.mapCategory(cat) : cat;
+              const tObj = (typeof TYPES !== 'undefined' && TYPES[tKey]) || { label: cat, color: '#f43f5e' };
+              return `<span style="font-size:10px;font-family:var(--f-mono);padding:2px 7px;border-radius:6px;background:${tObj.color}18;color:${tObj.color};border:1px solid ${tObj.color}35">
+                ${_esc(tObj.label)}: <strong>${count}</strong>
+              </span>`;
+            }).join('')}
+          </div>`
+        : '';
+
+      const zonesCount = rt.criticalSegments?.length || rt.hotspots?.length || 0;
+
       card.innerHTML = `
         <div class="rp-card-head">
           <div class="rp-card-title">
@@ -380,7 +511,7 @@ var RoutePlanner = (() => {
 
         <div class="rp-risk-wrap">
           <div class="rp-risk-head">
-            <span class="rp-risk-lbl">Risco</span>
+            <span class="rp-risk-lbl">Risco no Corredor (${rt.bufferMeters || 300}m)</span>
             <span class="rp-risk-val" style="color:${hexColor}">${rt.safetyLevel} — ${rt.riskScore}/100</span>
           </div>
           <div class="rp-bar-bg">
@@ -398,14 +529,29 @@ var RoutePlanner = (() => {
             <div class="rp-meta-v">${rt.durationMin}<small> min</small></div>
           </div>
           <div class="rp-meta-box">
-            <div class="rp-meta-l">Zonas risco</div>
-            <div class="rp-meta-v" style="color:${rt.hotspots.length ? '#ef4444' : 'var(--green)'}">
-              ${rt.hotspots.length}<small> zona${rt.hotspots.length !== 1 ? 's' : ''}</small>
+            <div class="rp-meta-l">No corredor</div>
+            <div class="rp-meta-v" style="color:${(rt.totalOccurrencesInCorridor || zonesCount) ? '#ef4444' : 'var(--green)'}">
+              ${rt.totalOccurrencesInCorridor || zonesCount}<small> ocorr.</small>
             </div>
           </div>
         </div>
 
-        ${rt.hotspots.length ? `
+        ${breakdownHtml}
+
+        ${rt.criticalSegments && rt.criticalSegments.length ? `
+          <div class="rp-hotspots">
+            <div class="rp-hs-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+              </svg>
+              Trechos críticos na rota (${rt.criticalSegments.length})
+            </div>
+            ${rt.criticalSegments.slice(0, 4).map(seg => `
+              <div class="rp-hs-item">
+                <div class="rp-hs-dot"></div>
+                <span><strong>${_esc(seg.dominantCategoryLabel || seg.dominantCategory || 'Risco')}</strong>: ${seg.occurrencesCount} ocorr. (${Math.round(seg.lengthMeters || 0)}m) — Risco ${seg.riskScore}/100</span>
+              </div>`).join('')}
+          </div>` : rt.hotspots.length ? `
           <div class="rp-hotspots">
             <div class="rp-hs-title">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -416,7 +562,7 @@ var RoutePlanner = (() => {
             ${rt.hotspots.map(hs => `
               <div class="rp-hs-item">
                 <div class="rp-hs-dot"></div>
-                ${hs.count} ocorrência${hs.count > 1 ? 's' : ''} — risco local ${hs.score.toFixed(1)}pt
+                ${hs.count} ocorrência${hs.count > 1 ? 's' : ''} — risco local ${Number(hs.score || 0).toFixed(1)}pt
               </div>`).join('')}
           </div>` : ''}
 

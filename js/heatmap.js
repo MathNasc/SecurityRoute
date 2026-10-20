@@ -5,9 +5,19 @@ var Heatmap = (() => {
   let _layer = null;
   let _map   = null;
   let _active = false;
+  let _apiPoints = [];
 
   function init(map) {
     _map = map;
+  }
+
+  function setApiPoints(points) {
+    if (Array.isArray(points)) {
+      _apiPoints = points;
+      if (_active) {
+        _rebuild(typeof Markers !== 'undefined' ? Markers.getAll() : []);
+      }
+    }
   }
 
   function update(occurrences) {
@@ -19,19 +29,45 @@ var Heatmap = (() => {
     _active = !_active;
     if (_active) {
       _rebuild(occurrences);
+      // Busca pontos de calor atualizados da API Public Security para a janela atual
+      if (typeof PublicSecurityClient !== 'undefined' && _map) {
+        const b = _map.getBounds();
+        PublicSecurityClient.fetchHeatmapAndHotspots({
+          minLat: Number(b.getSouth().toFixed(6)),
+          minLon: Number(b.getWest().toFixed(6)),
+          maxLat: Number(b.getNorth().toFixed(6)),
+          maxLon: Number(b.getEast().toFixed(6)),
+          gridSizeMeters: 300,
+          limit: 1500,
+        }).then(res => {
+          if (res?.points?.length) {
+            _apiPoints = res.points;
+            if (_active) _rebuild(typeof Markers !== 'undefined' ? Markers.getAll() : occurrences);
+          }
+          if (res?.hotspots?.length) {
+            PublicSecurityClient.renderHotspots(res.hotspots);
+          }
+        }).catch(() => {});
+      }
     } else {
       if (_layer) { _map.removeLayer(_layer); _layer = null; }
     }
     return _active;
   }
 
-  function _rebuild(occs) {
+  function _rebuild(occs = []) {
     if (_layer) { _map.removeLayer(_layer); _layer = null; }
-    if (!occs.length) return;
-    const pts = occs.map(o => {
-      const weight = (TYPES[o.type]?.weight || 5) / 10;
+
+    const localPts = occs.map(o => {
+      const weight = typeof o.severityWeight === 'number'
+        ? o.severityWeight
+        : (TYPES[o.type]?.weight || 5) / 10;
       return [o.lat, o.lng, weight];
     });
+
+    const pts = _apiPoints.length > 0 ? [..._apiPoints, ...localPts] : localPts;
+    if (!pts.length) return;
+
     _layer = L.heatLayer(pts, {
       radius:     28,
       blur:       22,
@@ -41,7 +77,7 @@ var Heatmap = (() => {
     }).addTo(_map);
   }
 
-  return { init, update, toggle };
+  return { init, update, toggle, setApiPoints };
 })();
 
 /* ════════════════════════════════════════════════════

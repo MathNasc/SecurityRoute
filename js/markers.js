@@ -31,28 +31,36 @@ var Markers = (() => {
 
   /* ── Popup HTML ── */
   function _popup(occ) {
-    const t  = TYPES[occ.type]  || TYPES.assalto;
+    const t  = TYPES[occ.type]  || TYPES.robbery || TYPES.assalto;
     const g  = GROUPS[t.group]  || GROUPS.security;
     const dt = occ.createdAt ? _timeAgo(new Date(occ.createdAt)) : '';
     const hour = occ.createdAt ? new Date(occ.createdAt).getHours() : -1;
     const period = hour < 0 ? '' : _isDaytime(hour) ? '☀️ Diurno' : '🌙 Noturno';
+    const titleLabel = occ.categoryLabel || t.label;
+    const subcat = occ.subcategory && occ.subcategory !== titleLabel ? occ.subcategory : '';
+    const officialBadge = occ.sourceId
+      ? `<span style="font-size:9px;font-weight:700;font-family:var(--fm);padding:2px 6px;border-radius:4px;background:rgba(59,130,246,.15);color:#60a5fa;border:1px solid rgba(59,130,246,.3)">${_esc(occ.sourceId)}</span>`
+      : '';
+
     return `
     <div class="popup-card">
       <div class="popup-head" style="border-left:3px solid ${t.color}">
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
           <span class="popup-badge" style="background:${t.color}18;color:${t.color};border:1px solid ${t.color}30">
             <span style="width:5px;height:5px;border-radius:50%;background:${t.color};display:inline-block;margin-right:4px"></span>
-            ${t.label.toUpperCase()}
+            ${_esc(titleLabel.toUpperCase())}
           </span>
+          ${officialBadge}
           ${period ? `<span style="font-size:10px;color:var(--tx3);font-family:var(--fm)">${period}</span>` : ''}
         </div>
-        <div class="popup-title">${t.label}</div>
-        <div style="font-size:11px;color:var(--tx3);font-family:var(--fm);margin-top:3px">
-          ${g.short.toUpperCase()}
+        <div class="popup-title">${_esc(subcat || titleLabel)}</div>
+        <div style="font-size:11px;color:var(--tx3);font-family:var(--fm);margin-top:3px;display:flex;justify-content:space-between;align-items:center">
+          <span>${g.short.toUpperCase()}</span>
+          ${typeof occ.severityWeight === 'number' ? `<span style="color:${t.color}">Severidade: ${Math.round(occ.severityWeight * 100)}%</span>` : ''}
         </div>
       </div>
       <div class="popup-body">
-        ${occ.description ? `
+        ${occ.description && occ.description !== subcat ? `
         <div class="popup-row">
           <svg class="popup-row-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
           <span>${_esc(occ.description)}</span>
@@ -62,8 +70,13 @@ var Markers = (() => {
           <svg class="popup-row-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
           <span style="font-size:12px">${_esc(occ.address.split(',').slice(0,3).join(', '))}</span>
         </div>` : ''}
-        ${dt ? `<div class="popup-time">
-          <svg style="width:10px;height:10px;display:inline;vertical-align:middle;margin-right:3px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${dt}
+        ${(occ.boNumber || occ.delegacia) ? `
+        <div class="popup-row" style="font-size:11px;color:var(--tx2);font-family:var(--fm)">
+          <svg class="popup-row-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          <span>${[occ.boNumber ? `B.O. ${occ.boNumber}` : '', occ.delegacia || ''].filter(Boolean).map(_esc).join(' • ')}</span>
+        </div>` : ''}
+        ${(dt || occ.time) ? `<div class="popup-time">
+          <svg style="width:10px;height:10px;display:inline;vertical-align:middle;margin-right:3px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${dt}${occ.time ? ` (${_esc(occ.time.slice(0,5))})` : ''}
         </div>` : ''}
       </div>
     </div>`;

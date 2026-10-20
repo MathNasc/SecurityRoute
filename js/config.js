@@ -22,6 +22,8 @@ var CFG = {
   nominatim:'https://nominatim.openstreetmap.org',
   osrm: 'https://router.project-osrm.org',
   country: 'br',
+  publicSecurityUrl: window.ENV?.VITE_PUBLIC_SECURITY_API_URL || 'https://ais-pre-i62a2zwoizbmsr6t53awod-238922234262.us-east5.run.app/api/public/v1',
+  publicSecurityKey: window.ENV?.VITE_PUBLIC_SECURITY_API_KEY || 'test_api_key_123',
 };
 
 /* ── Grupos de ocorrência ── */
@@ -54,7 +56,39 @@ var GROUPS = {
 
 /* ── Tipos de ocorrência ── */
 var TYPES = {
-  /* ── Segurança Pública ── */
+  /* ── Segurança Pública (Categorias Public Security API + Colaborativas) ── */
+  robbery: {
+    label:'Roubo', group:'security', weight:10, color:'#f43f5e',
+    icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
+  },
+  theft: {
+    label:'Furto', group:'security', weight:7, color:'#e11d48',
+    icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>`,
+  },
+  vehicle_robbery: {
+    label:'Roubo de Veículo', group:'security', weight:10, color:'#be123c',
+    icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 16H9m10 0h3v-3.15a1 1 0 0 0-.84-.99L16 11l-2.7-3.6a1 1 0 0 0-.8-.4H5.24a2 2 0 0 0-1.8 1.1l-.8 1.63A6 6 0 0 0 2 12.42V16h2"/><circle cx="6.5" cy="16.5" r="2.5"/><circle cx="16.5" cy="16.5" r="2.5"/></svg>`,
+  },
+  vehicle_theft: {
+    label:'Furto de Veículo', group:'security', weight:8, color:'#fb7185',
+    icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 16H9m10 0h3v-3.15a1 1 0 0 0-.84-.99L16 11l-2.7-3.6a1 1 0 0 0-.8-.4H5.24a2 2 0 0 0-1.8 1.1l-.8 1.63A6 6 0 0 0 2 12.42V16h2"/><circle cx="6.5" cy="16.5" r="2.5"/><circle cx="16.5" cy="16.5" r="2.5"/></svg>`,
+  },
+  bodily_harm: {
+    label:'Lesão Corporal', group:'security', weight:8, color:'#f97316',
+    icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>`,
+  },
+  homicide: {
+    label:'Homicídio', group:'security', weight:10, color:'#991b1b',
+    icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
+  },
+  sexual_crime: {
+    label:'Crime Sexual', group:'security', weight:10, color:'#dc2626',
+    icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
+  },
+  drug_related: {
+    label:'Entorpecentes', group:'security', weight:6, color:'#a855f7',
+    icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.5 20.5 3.5 13.5a4.95 4.95 0 1 1 7-7l7 7a4.95 4.95 0 1 1-7 7Z"/><path d="m8.5 8.5 7 7"/></svg>`,
+  },
   assalto: {
     label:'Assalto', group:'security', weight:10, color:'#f43f5e',
     icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,

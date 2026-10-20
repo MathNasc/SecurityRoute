@@ -6,6 +6,8 @@
 
 var RISK_CFG = {
   weights: {
+    robbery: 10, theft: 7, vehicle_robbery: 10, vehicle_theft: 8,
+    bodily_harm: 8, homicide: 10, sexual_crime: 10, drug_related: 6,
     assalto: 10, tentativa_assalto: 8, furto: 7, area_perigosa: 9,
     presenca_suspeita: 5, vandalismo: 4, rua_escura: 3, falta_iluminacao: 3,
     alagamento: 6, enchente: 7, deslizamento: 8, buraco_via: 4,
@@ -15,6 +17,8 @@ var RISK_CFG = {
   },
   // How much nighttime amplifies each type (1.0 = no change)
   nightMult: {
+    robbery: 1.8, theft: 1.3, vehicle_robbery: 1.9, vehicle_theft: 1.5,
+    bodily_harm: 1.5, homicide: 1.8, sexual_crime: 2.0, drug_related: 1.4,
     rua_escura: 3.0, falta_iluminacao: 2.5, area_perigosa: 1.7,
     assalto: 1.8, tentativa_assalto: 1.6, presenca_suspeita: 1.5,
     furto: 1.3, vandalismo: 1.2, acidente_frequente: 1.2, obra_interdicao: 0.4,

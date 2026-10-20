@@ -884,6 +884,30 @@ canvas.leaflet-heatmap-layer,
             <span class="theme-active-badge" style="font-size:10px; font-weight:700; font-family:var(--f-mono); text-transform:uppercase; padding:3px 8px; border-radius:6px; background:var(--ac-dim); color:var(--accent); border:1px solid rgba(255,107,43,.3); display:none;">Ativo</span>
           </button>
 
+          <span class="sec-lbl" style="padding:20px 0 10px">Integração Public Security API</span>
+          <div style="display:flex; flex-direction:column; gap:10px; padding:14px; background:var(--s2); border:1px solid var(--bd); border-radius:12px;">
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" width="18" height="18">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                </svg>
+                <span style="font-weight:600; font-size:13px; color:var(--tx1);">Ocorrências & Rotas</span>
+              </div>
+              <span id="psApiStatusBadge" style="font-size:10px; font-weight:700; font-family:var(--f-mono); text-transform:uppercase; padding:3px 8px; border-radius:6px; background:rgba(16,185,129,.15); color:#10b981; border:1px solid rgba(16,185,129,.35);">Ativo</span>
+            </div>
+            <div id="psApiMetaText" style="font-size:11px; color:var(--tx2); font-family:var(--f-mono); line-height:1.4;">
+              Sincronizando dados georreferenciados e zonas críticas…
+            </div>
+            <div style="display:flex; gap:8px; margin-top:4px;">
+              <button type="button" id="toggleHotspotsBtn" style="flex:1; padding:8px 10px; border-radius:8px; font-size:12px; font-weight:600; background:var(--s3); color:var(--tx1); border:1px solid var(--accent); cursor:pointer;">
+                Hotspots: Visíveis
+              </button>
+              <button type="button" id="psSyncNowBtn" style="padding:8px 12px; border-radius:8px; font-size:12px; font-weight:600; background:var(--ac-dim); color:var(--accent); border:1px solid rgba(255,107,43,.3); cursor:pointer;">
+                Sincronizar
+              </button>
+            </div>
+          </div>
+
           <span class="sec-lbl" style="padding:20px 0 10px">Aplicativo Móvel</span>
           <button class="config-theme-btn" id="pwaInstallBtn" style="display:none; align-items:center; gap:12px; padding:16px; background:var(--ac-dim); border:1px solid rgba(255,107,43,.3); border-radius:12px; cursor:pointer; text-align:left; color:var(--accent);">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="24" height="24">
@@ -983,25 +1007,31 @@ canvas.leaflet-heatmap-layer,
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
 <script>
-  window.ENV = { MAPBOX_TOKEN: "", CARTO_API_KEY: "" };
+  window.ENV = {
+    MAPBOX_TOKEN: "",
+    CARTO_API_KEY: "",
+    VITE_PUBLIC_SECURITY_API_URL: "https://ais-pre-i62a2zwoizbmsr6t53awod-238922234262.us-east5.run.app/api/public/v1",
+    VITE_PUBLIC_SECURITY_API_KEY: "test_api_key_123"
+  };
 </script>
-<script src="/api/env.js?v=18"></script>
-<script src="js/config.js?v=18"></script>
-<script src="js/toast.js?v=18"></script>
-<script src="js/api.js?v=18"></script>
-<script src="js/risk-engine.js?v=18"></script>
-<script src="js/osrm-client.js?v=18"></script>
-<script src="js/markers.js?v=18"></script>
-<script src="js/map.js?v=18"></script>
-<script src="js/heatmap.js?v=18"></script>
-<script src="js/search.js?v=18"></script>
-<script src="js/filters.js?v=18"></script>
-<script src="js/stats.js?v=18"></script>
-<script src="js/analytics.js?v=18"></script>
-<script src="js/realtime.js?v=18"></script>
-<script src="js/sheet.js?v=18"></script>
-<script src="js/route-planner.js?v=18"></script>
-<script src="js/app.js?v=18"></script>
+<script src="/api/env.js?v=19"></script>
+<script src="js/config.js?v=19"></script>
+<script src="js/toast.js?v=19"></script>
+<script src="js/public-security.js?v=19"></script>
+<script src="js/api.js?v=19"></script>
+<script src="js/risk-engine.js?v=19"></script>
+<script src="js/osrm-client.js?v=19"></script>
+<script src="js/markers.js?v=19"></script>
+<script src="js/map.js?v=19"></script>
+<script src="js/heatmap.js?v=19"></script>
+<script src="js/search.js?v=19"></script>
+<script src="js/filters.js?v=19"></script>
+<script src="js/stats.js?v=19"></script>
+<script src="js/analytics.js?v=19"></script>
+<script src="js/realtime.js?v=19"></script>
+<script src="js/sheet.js?v=19"></script>
+<script src="js/route-planner.js?v=19"></script>
+<script src="js/app.js?v=19"></script>
 
 <!-- ── PWA: Service Worker + Install prompt ── -->
 <script>
@@ -1010,7 +1040,7 @@ canvas.leaflet-heatmap-layer,
   if ('caches' in window) {
     caches.keys().then(keys => {
       keys.forEach(k => {
-        if (k !== 'sr-v18') caches.delete(k);
+        if (k !== 'sr-v19') caches.delete(k);
       });
     }).catch(() => {});
   }
@@ -1025,7 +1055,7 @@ canvas.leaflet-heatmap-layer,
     });
 
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js?v=18', { updateViaCache: 'none' })
+      navigator.serviceWorker.register('/sw.js?v=19', { updateViaCache: 'none' })
         .then(reg => {
           reg.update();
           if (reg.waiting) {

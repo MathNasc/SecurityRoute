@@ -492,27 +492,81 @@ var API = (() => {
     } catch { return null; }
   }
 
-  /* ══ OCCURRENCES CRUD (ONLINE & OFFLINE QUEUE) ═══════ */
-  async function getOccurrences() {
-    if (!window.SR_API_URL) return [..._store];
-    try {
-      const r = await fetch(`${window.SR_API_URL}/occurrences`);
-      if (!r.ok) throw new Error(`HTTP ${r.status}`);
-      const data = await r.json();
+  /* ══ OCCURRENCES CRUD (ONLINE, PUBLIC SECURITY API & OFFLINE QUEUE) ═══════ */
+  async function getOccurrences(queryParams = null) {
+    const mergedMap = new Map();
+
+    // 1. Busca ocorrências da API Public Security (JSON georreferenciado)
+    if (typeof PublicSecurityClient !== 'undefined') {
       try {
-        localStorage.setItem('sr_cached_occurrences', JSON.stringify(data));
-      } catch (e) {}
-      return data;
-    } catch (err) {
-      // Fallback para cache local se a rede estiver fora do ar
-      const cached = localStorage.getItem('sr_cached_occurrences');
-      if (cached) {
-        try {
-          return JSON.parse(cached);
-        } catch (e) {}
+        let params = queryParams;
+        if (!params) {
+          const m = typeof MapMod !== 'undefined' && MapMod.getMap ? MapMod.getMap() : null;
+          if (m) {
+            const b = m.getBounds();
+            params = {
+              minLat: Number(b.getSouth().toFixed(6)),
+              minLon: Number(b.getWest().toFixed(6)),
+              maxLat: Number(b.getNorth().toFixed(6)),
+              maxLon: Number(b.getEast().toFixed(6)),
+              limit: 400,
+            };
+          } else {
+            params = {
+              lat: (typeof CFG !== 'undefined' && CFG.center?.[0]) || -23.5505,
+              lon: (typeof CFG !== 'undefined' && CFG.center?.[1]) || -46.6333,
+              radius: 15000,
+              limit: 400,
+            };
+          }
+        }
+        const psResult = await PublicSecurityClient.fetchOccurrences(params);
+        if (Array.isArray(psResult?.data)) {
+          psResult.data.forEach(item => {
+            if (item && item.id) mergedMap.set(String(item.id), item);
+          });
+        }
+      } catch (psErr) {
+        console.warn('[API] Public Security API indisponível no momento:', psErr.message);
       }
-      return [..._store];
     }
+
+    // 2. Busca ocorrências colaborativas do backend local
+    if (window.SR_API_URL) {
+      try {
+        const r = await fetch(`${window.SR_API_URL}/occurrences`);
+        if (r.ok) {
+          const localData = await r.json();
+          if (Array.isArray(localData)) {
+            localData.forEach(item => {
+              if (item && item.id !== undefined) mergedMap.set(String(item.id), item);
+            });
+          }
+        }
+      } catch (err) {
+        console.warn('[API] Falha ao buscar ocorrências locais:', err.message);
+      }
+    }
+
+    const combined = Array.from(mergedMap.values());
+    if (combined.length > 0) {
+      try {
+        localStorage.setItem('sr_cached_occurrences', JSON.stringify(combined));
+      } catch (e) {}
+      if (typeof PublicSecurityClient !== 'undefined' && PublicSecurityClient.registerKnownIds) {
+        PublicSecurityClient.registerKnownIds(combined);
+      }
+      return combined;
+    }
+
+    // Fallback para cache local se a rede estiver fora do ar
+    const cached = localStorage.getItem('sr_cached_occurrences');
+    if (cached) {
+      try {
+        return JSON.parse(cached);
+      } catch (e) {}
+    }
+    return [..._store];
   }
 
   function _queueOfflineOccurrence(payload) {

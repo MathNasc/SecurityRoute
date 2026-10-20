@@ -12,8 +12,8 @@
    └─────────────────────────────────────────────────┘
    ════════════════════════════════════════════════════ */
 
-const CACHE_VERSION  = 'sr-v18';
-const TILE_CACHE     = 'sr-tiles-v18';
+const CACHE_VERSION  = 'sr-v19';
+const TILE_CACHE     = 'sr-tiles-v19';
 const MAX_TILE_CACHE = 500;
 
 /* ── App shell — recursos que funcionam offline ── */
@@ -21,6 +21,7 @@ const APP_SHELL = [
   '/',
   '/index.html',
   '/js/config.js',
+  '/js/public-security.js',
   '/js/api.js',
   '/js/toast.js',
   '/js/markers.js',
